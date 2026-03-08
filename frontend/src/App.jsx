@@ -12,6 +12,8 @@ import TeacherAttendancePage from "./pages/TeacherAttendancePage";
 import TeacherLecturePage from "./pages/TeacherLecturePage";
 import AnalyticsPage from "./pages/AnalyticsPage";
 import AnnouncementsPage from "./pages/AnnouncementsPage";
+import DepartmentsPage from "./pages/admin/DepartmentsPage";
+import EnrollStudentPage from "./pages/admin/EnrollStudentPage";
 
 function RequireRole({ role, children }) {
   const stored = window.localStorage.getItem("current_user");
@@ -69,6 +71,17 @@ function App() {
 
         {/* LMS Feature Routes */}
         <Route path="/courses" element={<CoursesPage />} />
+        <Route path="/departments" element={
+          <RequireRole role="ADMIN">
+            <DepartmentsPage />
+          </RequireRole>
+        } />
+        <Route path="/enrollment" element={
+          <RequireRole role="ADMIN">
+            <EnrollStudentPage />
+          </RequireRole>
+        } />
+
         <Route path="/assignments" element={<TeacherAssignmentsPage />} />
         <Route path="/quizzes" element={<TeacherQuizzesPage />} />
         <Route path="/attendance" element={<TeacherAttendancePage />} />
