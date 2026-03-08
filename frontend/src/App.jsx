@@ -5,6 +5,13 @@ import InstituteRegisterPage from "./pages/InstituteRegisterPage";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import TeacherDashboard from "./pages/TeacherDashboard";
 import StudentDashboard from "./pages/StudentDashboard";
+import CoursesPage from "./pages/CoursesPage";
+import TeacherAssignmentsPage from "./pages/TeacherAssignmentsPage";
+import TeacherQuizzesPage from "./pages/TeacherQuizzesPage";
+import TeacherAttendancePage from "./pages/TeacherAttendancePage";
+import TeacherLecturePage from "./pages/TeacherLecturePage";
+import AnalyticsPage from "./pages/AnalyticsPage";
+import AnnouncementsPage from "./pages/AnnouncementsPage";
 
 function RequireRole({ role, children }) {
   const stored = window.localStorage.getItem("current_user");
@@ -59,6 +66,16 @@ function App() {
             </RequireRole>
           }
         />
+
+        {/* LMS Feature Routes */}
+        <Route path="/courses" element={<CoursesPage />} />
+        <Route path="/assignments" element={<TeacherAssignmentsPage />} />
+        <Route path="/quizzes" element={<TeacherQuizzesPage />} />
+        <Route path="/attendance" element={<TeacherAttendancePage />} />
+        <Route path="/lectures" element={<TeacherLecturePage />} />
+        <Route path="/analytics" element={<AnalyticsPage />} />
+        <Route path="/announcements" element={<AnnouncementsPage />} />
+
         <Route path="*" element={<LoginPage />} />
       </Routes>
     </BrowserRouter>
