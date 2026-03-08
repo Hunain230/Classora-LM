@@ -2,11 +2,21 @@ from django.db import models
 from django.utils import timezone
 from accounts.models import Institute, CustomUser
 
+class Department(models.Model):
+    institute = models.ForeignKey(Institute, on_delete=models.CASCADE, related_name='departments')
+    name = models.CharField(max_length=100)
+    code = models.CharField(max_length=10, blank=True)
+    description = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.name} ({self.institute.name})"
+
 class Course(models.Model):
     institute = models.ForeignKey(Institute, on_delete=models.CASCADE, related_name="courses")
     name = models.CharField(max_length=255)
     code = models.CharField(max_length=100)
-    department = models.CharField(max_length=255, null=True, blank=True)
+    department = models.ForeignKey(Department, on_delete=models.SET_NULL, null=True, blank=True, related_name='courses')
     semester = models.CharField(max_length=100, null=True, blank=True)
     description = models.TextField(null=True, blank=True)
     icon = models.ImageField(upload_to="course_icons/", null=True, blank=True)
