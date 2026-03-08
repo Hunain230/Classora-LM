@@ -1,0 +1,205 @@
+/* LoginPage.css */
+
+:root {
+    --primary-blue: #2196F3;
+    --bg-gradient: linear-gradient(135deg, #fff9e6 0%, #e3f2fd 100%);
+    --text-dark: #333333;
+    --text-grey: #666666;
+}
+
+/* Ensure the root fills the entire viewport on PC and Mobile */
+.login-page-container {
+    min-height: 100vh;
+    width: 100vw;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-gradient);
+    background-attachment: fixed;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding: 0;
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+.login-content {
+    width: 100%;
+    max-width: 440px;
+    padding: 40px 20px;
+    text-align: center;
+    z-index: 10;
+}
+
+.login-logo-wrapper {
+    margin-bottom: 20px;
+}
+
+.login-logo-svg {
+    width: 130px;
+    height: auto;
+    filter: drop-shadow(0 4px 8px rgba(33, 150, 243, 0.2));
+}
+
+.login-slogan {
+    color: var(--primary-blue);
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 40px;
+    letter-spacing: 0.5px;
+}
+
+.login-form-card {
+    width: 100%;
+}
+
+.pill-input-wrapper {
+    background: white;
+    border-radius: 50px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    padding: 4px 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06);
+    border: 1px solid rgba(0, 0, 0, 0.02);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.pill-input-wrapper:focus-within {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(33, 150, 243, 0.1);
+}
+
+.pill-input-icon {
+    width: 45px;
+    display: flex;
+    justify-content: center;
+    color: #888;
+}
+
+.pill-input-icon svg {
+    width: 22px;
+    height: 22px;
+}
+
+.pill-input-divider {
+    width: 1px;
+    height: 24px;
+    background: #f0f0f0;
+}
+
+.pill-input-field {
+    flex: 1;
+    border: none;
+    background: transparent;
+    padding: 14px 20px;
+    font-size: 16px;
+    color: var(--text-dark);
+}
+
+.pill-input-field:focus {
+    outline: none;
+}
+
+.pill-input-field::placeholder {
+    color: #bbbbbb;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    font-weight: 500;
+    font-size: 0.85rem;
+}
+
+.login-options {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 10px 15px 35px;
+    color: var(--primary-blue);
+    font-size: 0.9rem;
+}
+
+.remember-me-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    color: #777;
+}
+
+.remember-me-label input {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--primary-blue);
+    cursor: pointer;
+}
+
+.forgot-password-link {
+    color: var(--primary-blue);
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.pill-submit-btn {
+    width: 100%;
+    padding: 18px;
+    background: var(--primary-blue);
+    color: white;
+    border: none;
+    border-radius: 50px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    letter-spacing: 2px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 8px 20px rgba(33, 150, 243, 0.3);
+    text-transform: uppercase;
+}
+
+.pill-submit-btn:hover {
+    background: #1976D2;
+    box-shadow: 0 10px 25px rgba(33, 150, 243, 0.4);
+}
+
+.pill-error-msg {
+    background: rgba(244, 67, 54, 0.08);
+    color: #d32f2f;
+    padding: 12px;
+    border-radius: 50px;
+    font-size: 0.9rem;
+    margin-bottom: 20px;
+    font-weight: 500;
+}
+
+.pill-register-footer {
+    margin-top: 40px;
+    color: #999;
+    font-size: 0.95rem;
+}
+
+.pill-register-footer button {
+    background: none;
+    border: none;
+    color: var(--primary-blue);
+    font-weight: 700;
+    cursor: pointer;
+    margin-left: 8px;
+    font-size: 0.95rem;
+}
+
+/* Responsiveness adjustments for PC vs Mobile */
+@media (max-width: 480px) {
+    .login-content {
+        max-width: 100%;
+        padding: 30px;
+    }
+
+    .login-logo-svg {
+        width: 110px;
+    }
+
+    .pill-submit-btn {
+        font-size: 1rem;
+        padding: 16px;
+    }
+}
