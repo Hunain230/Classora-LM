@@ -87,7 +87,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'classora_lms',
         'USER': 'root',
-        'PASSWORD': r'mMoOhHiIdD789753',
+        'PASSWORD': 'mMoOhHiIdD789753',
         'HOST': 'localhost',
         'PORT': '3306',
     }
