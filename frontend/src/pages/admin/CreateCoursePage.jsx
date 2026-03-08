@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import DashboardLayout from "../../components/DashboardLayout";
 import { apiClient } from "../../api/client";
 import "./AdminCourse.css";
 
 export default function CreateCoursePage() {
+    const navigate = useNavigate();
     const [user] = useState(JSON.parse(localStorage.getItem("current_user") || "{}"));
     const [teachers, setTeachers] = useState([]);
-    const [loading, setLoading] = useState(false);
+    const [departments, setDepartments] = useState([]);
 
     const [formData, setFormData] = useState({
         name: "",
@@ -25,10 +27,21 @@ export default function CreateCoursePage() {
     const [message, setMessage] = useState({ type: "", text: "" });
 
     useEffect(() => {
-        // Fetch teachers for the multi-select
+        // Fetch teachers
         apiClient.get(`/api/users/?role=TEACHER&institute=${user.institute_id}`)
-            .then(res => setTeachers(res.data.results || []))
+            .then(res => {
+                const data = Array.isArray(res.data) ? res.data : (res.data.results || []);
+                setTeachers(data);
+            })
             .catch(err => console.error("Error fetching teachers", err));
+
+        // Fetch departments
+        apiClient.get(`/api/lms/departments/`)
+            .then(res => {
+                const data = Array.isArray(res.data) ? res.data : (res.data.results || []);
+                setDepartments(data);
+            })
+            .catch(err => console.error("Error fetching departments", err));
     }, [user.institute_id]);
 
     const handleInputChange = (e) => {
@@ -42,10 +55,10 @@ export default function CreateCoursePage() {
     const handleTeacherToggle = (teacherId) => {
         setFormData(prev => {
             const alreadyAssigned = prev.assigned_teachers.includes(teacherId);
-            if (alreadyAssigned) {
-                return { ...prev, assigned_teachers: prev.assigned_teachers.filter(id => id !== teacherId) };
-            }
-            return { ...prev, assigned_teachers: [...prev.assigned_teachers, teacherId] };
+            const newList = alreadyAssigned
+                ? prev.assigned_teachers.filter(id => id !== teacherId)
+                : [...prev.assigned_teachers, teacherId];
+            return { ...prev, assigned_teachers: newList };
         });
     };
 
@@ -108,11 +121,11 @@ export default function CreateCoursePage() {
                             <div className="form-group flex-1">
                                 <label>Department:</label>
                                 <div className="pill-input-wrapper">
-                                    <select name="department" value={formData.department} onChange={handleInputChange}>
+                                    <select name="department" value={formData.department} onChange={handleInputChange} required>
                                         <option value="">Select Department</option>
-                                        <option value="Psychology">Psychology</option>
-                                        <option value="Computer Science">Computer Science</option>
-                                        <option value="Business">Business</option>
+                                        {departments.map(d => (
+                                            <option key={d.id} value={d.id}>{d.name}</option>
+                                        ))}
                                     </select>
                                 </div>
                             </div>
@@ -129,18 +142,19 @@ export default function CreateCoursePage() {
 
                         <div className="form-group">
                             <label>Assign Teachers:</label>
-                            <div className="teacher-chips-container pill-input-wrapper" style={{ flexWrap: 'wrap', minHeight: '60px', padding: '10px 20px' }}>
+                            <div className="teacher-chips-container pill-input-wrapper multi-select">
                                 {formData.assigned_teachers.map(tid => {
                                     const t = teachers.find(teacher => teacher.id === tid);
                                     return t ? (
                                         <div key={tid} className="teacher-chip">
                                             {t.full_name}
-                                            <span className="material-icons-round" onClick={() => handleTeacherToggle(tid)}>close</span>
+                                            <span className="material-icons-round chip-close" onClick={() => handleTeacherToggle(tid)}>close</span>
                                         </div>
                                     ) : null;
                                 })}
                                 <div className="add-teacher-btn">
-                                    + Add more...
+                                    <span className="material-icons-round">add</span>
+                                    Add more...
                                     <select className="hidden-select" onChange={(e) => handleTeacherToggle(parseInt(e.target.value))}>
                                         <option value="">Select Teacher</option>
                                         {teachers.filter(t => !formData.assigned_teachers.includes(t.id)).map(t => (
@@ -161,7 +175,7 @@ export default function CreateCoursePage() {
 
                         <div className="form-group">
                             <label>Course Description:</label>
-                            <div className="pill-input-wrapper" style={{ borderRadius: '25px', padding: '15px 20px' }}>
+                            <div className="pill-input-wrapper" style={{ borderRadius: '25px', padding: '15px' }}>
                                 <textarea name="description" placeholder="Course overview, learning objectives, syllabus..." value={formData.description} onChange={handleInputChange} style={{ height: '120px', resize: 'none', border: 'none', width: '100%', background: 'transparent' }} />
                             </div>
                         </div>
@@ -171,9 +185,21 @@ export default function CreateCoursePage() {
                             <div className="pill-input-wrapper">
                                 <input placeholder="None / Select courses" />
                             </div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '10px' }}>
-                                <input type="checkbox" style={{ width: '18px', height: '18px' }} />
-                                <span style={{ fontSize: '0.9rem', color: '#666' }}>Auto-enroll eligible students</span>
+                        </div>
+
+                        <div className="form-group">
+                            <label>Course Visibility:</label>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '15px', padding: '10px 20px' }}>
+                                <input
+                                    type="checkbox"
+                                    name="is_published"
+                                    checked={formData.is_published}
+                                    onChange={handleInputChange}
+                                    style={{ width: '22px', height: '22px', accentColor: '#2196F3', cursor: 'pointer' }}
+                                />
+                                <span style={{ fontSize: '1rem', fontWeight: 600, color: '#475569' }}>
+                                    Publish course immediately (visible to students)
+                                </span>
                             </div>
                         </div>
 
@@ -192,9 +218,9 @@ export default function CreateCoursePage() {
                             </div>
                         </div>
 
-                        <div className="form-actions">
-                            <button type="button" className="pill-submit-btn secondary" onClick={() => navigate("/admin")}>CANCEL</button>
-                            <button type="submit" className="pill-submit-btn primary" disabled={submitting}>
+                        <div className="form-actions" style={{ marginTop: '50px', gap: '25px' }}>
+                            <button type="button" className="pill-submit-btn secondary" style={{ width: '220px' }} onClick={() => navigate("/admin")}>CANCEL</button>
+                            <button type="submit" className="pill-submit-btn primary" style={{ width: '320px' }} disabled={submitting}>
                                 {submitting ? "CREATING..." : "CREATE COURSE"}
                             </button>
                         </div>
@@ -214,8 +240,18 @@ export default function CreateCoursePage() {
                                 </div>
                             </div>
                             <div className="preview-details">
-                                <div className="preview-stat">Teachers: {formData.assigned_teachers.length} assigned</div>
-                                <div className="status-badge">Status: Ready to publish</div>
+                                <div className="preview-stat">
+                                    <span className="material-icons-round" style={{ fontSize: '16px', verticalAlign: 'middle', marginRight: '5px' }}>groups</span>
+                                    Teachers: {formData.assigned_teachers.length} assigned
+                                </div>
+                                <div className="preview-stat">
+                                    <span className="material-icons-round" style={{ fontSize: '16px', verticalAlign: 'middle', marginRight: '5px' }}>layers</span>
+                                    Credits: {formData.credits}
+                                </div>
+                                <div className="status-badge">
+                                    <span className="material-icons-round" style={{ fontSize: '16px', verticalAlign: 'middle', marginRight: '5px' }}>check_circle</span>
+                                    {formData.is_published ? "Will be Public" : "Draft Mode"}
+                                </div>
                             </div>
                         </div>
                     </div>
