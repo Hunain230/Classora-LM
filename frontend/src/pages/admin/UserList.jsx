@@ -22,127 +22,86 @@ export default function UserList({ instituteId }) {
       })
       .catch((err) => {
         console.error(err);
-        if (err.response && err.response.status === 403) {
-          setError("You do not have permission to view users.");
-        } else {
-          setError("Failed to load users.");
-        }
+        setError("Failed to load user database.");
       });
   }, [instituteId, search, page]);
 
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
   return (
-    <div style={{ marginTop: 24 }}>
-      <h3 style={{ marginBottom: 8 }}>Users</h3>
-      {error && <p style={{ color: "#b91c1c" }}>{error}</p>}
-
-      <div style={{ marginBottom: 8, display: "flex", gap: 8 }}>
-        <input
-          type="text"
-          placeholder="Search by name or email"
-          value={search}
-          onChange={(e) => {
-            setSearch(e.target.value);
-            setPage(1);
-          }}
-          style={{
-            flex: 1,
-            padding: 8,
-            borderRadius: 6,
-            border: "1px solid #d1d5db",
-            fontSize: 14,
-          }}
-        />
+    <div className="dashboard-card">
+      <div className="card-title">
+        <svg style={{ width: 24, height: 24 }} viewBox="0 0 24 24" fill="currentColor">
+          <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5s-3 1.34-3 3 1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z" />
+        </svg>
+        Member Directory
       </div>
 
-      {users.length === 0 ? (
-        <p>No users found for this institute.</p>
-      ) : (
-        <>
-          <table
-            style={{
-              width: "100%",
-              borderCollapse: "collapse",
-              border: "1px solid #e5e7eb",
-            }}
-          >
-            <thead>
-              <tr style={{ background: "#f3f4f6" }}>
-                <th style={{ padding: 8, borderBottom: "1px solid #e5e7eb" }}>
-                  Name
-                </th>
-                <th style={{ padding: 8, borderBottom: "1px solid #e5e7eb" }}>
-                  Email
-                </th>
-                <th style={{ padding: 8, borderBottom: "1px solid #e5e7eb" }}>
-                  Role
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {users.map((u) => (
-                <tr key={u.id}>
-                  <td style={{ padding: 8, borderBottom: "1px solid #f3f4f6" }}>
-                    {u.full_name}
-                  </td>
-                  <td style={{ padding: 8, borderBottom: "1px solid #f3f4f6" }}>
-                    {u.email}
-                  </td>
-                  <td style={{ padding: 8, borderBottom: "1px solid #f3f4f6" }}>
-                    {u.role}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+      {error && <p className="pill-error-msg">{error}</p>}
 
-          <div
-            style={{
-              marginTop: 8,
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              fontSize: 14,
+      <div style={{ marginBottom: 20 }}>
+        <div className="dashboard-pill-input" style={{ maxWidth: '400px' }}>
+          <input
+            type="text"
+            placeholder="Search by name or email"
+            value={search}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setPage(1);
             }}
+          />
+        </div>
+      </div>
+
+      <div className="dashboard-table-wrapper">
+        <table className="dashboard-table">
+          <thead>
+            <tr>
+              <th>Member Name</th>
+              <th>Email Address</th>
+              <th>System Role</th>
+            </tr>
+          </thead>
+          <tbody>
+            {users.map((u) => (
+              <tr key={u.id}>
+                <td><strong>{u.full_name}</strong></td>
+                <td>{u.email}</td>
+                <td><span style={{ color: '#2196F3', fontWeight: 'bold' }}>{u.role}</span></td>
+              </tr>
+            ))}
+            {users.length === 0 && (
+              <tr>
+                <td colSpan="3" style={{ textAlign: 'center', padding: '40px' }}>
+                  No members found in the directory.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="dashboard-pagination">
+        <span>
+          Showing page <strong>{page}</strong> of {totalPages} ({total} members total)
+        </span>
+        <div style={{ display: "flex", gap: 8 }}>
+          <button
+            className="pagination-btn"
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            disabled={page <= 1}
           >
-            <span>
-              Page {page} of {totalPages} (total {total} users)
-            </span>
-            <div style={{ display: "flex", gap: 8 }}>
-              <button
-                type="button"
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                disabled={page <= 1}
-                style={{
-                  padding: "0.25rem 0.5rem",
-                  borderRadius: 4,
-                  border: "1px solid #d1d5db",
-                  backgroundColor: page <= 1 ? "#f9fafb" : "#ffffff",
-                  cursor: page <= 1 ? "default" : "pointer",
-                }}
-              >
-                Previous
-              </button>
-              <button
-                type="button"
-                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                disabled={page >= totalPages}
-                style={{
-                  padding: "0.25rem 0.5rem",
-                  borderRadius: 4,
-                  border: "1px solid #d1d5db",
-                  backgroundColor: page >= totalPages ? "#f9fafb" : "#ffffff",
-                  cursor: page >= totalPages ? "default" : "pointer",
-                }}
-              >
-                Next
-              </button>
-            </div>
-          </div>
-        </>
-      )}
+            Prev
+          </button>
+          <button
+            className="pagination-btn"
+            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+            disabled={page >= totalPages}
+          >
+            Next
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
-
