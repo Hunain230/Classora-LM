@@ -14,7 +14,7 @@ export default function CreateUserForm({ instituteId }) {
     setError("");
 
     if (!fullName || !email || !password) {
-      setError("Full name, email, and password are required.");
+      setError("Please fill in all required fields.");
       return;
     }
 
@@ -30,24 +30,20 @@ export default function CreateUserForm({ instituteId }) {
       setFullName("");
       setEmail("");
       setPassword("");
-      alert("User created!");
+      setError("");
+      // Better to use a non-blocking notification, but keeping current flow for now
+      alert("User created successfully!");
     } catch (err) {
       console.error(err);
       if (err.response && err.response.data) {
         const data = err.response.data;
-        if (typeof data === "string") {
-          setError(data);
-        } else if (data.detail) {
-          setError(data.detail);
-        } else if (data.non_field_errors) {
-          setError(data.non_field_errors.join(" "));
-        } else if (data.email) {
-          setError(data.email.join(" "));
-        } else {
-          setError("Error creating user.");
-        }
+        // Flatten error object for display
+        const message = typeof data === "string"
+          ? data
+          : Object.entries(data).map(([field, msgs]) => `${field}: ${msgs.join(" ")}`).join("; ");
+        setError(message || "Error creating user. Check your details.");
       } else {
-        setError("Error creating user.");
+        setError("Network error. Is the server running?");
       }
     } finally {
       setSubmitting(false);
@@ -55,89 +51,63 @@ export default function CreateUserForm({ instituteId }) {
   };
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      style={{
-        marginBottom: 24,
-        padding: 16,
-        borderRadius: 8,
-        border: "1px solid #e5e7eb",
-      }}
-    >
-      <h3 style={{ marginBottom: 12 }}>Create User</h3>
-      {error && <p style={{ color: "#b91c1c" }}>{error}</p>}
-      <div style={{ marginBottom: 8 }}>
-        <input
-          placeholder="Full Name"
-          value={fullName}
-          onChange={(e) => setFullName(e.target.value)}
-          style={{
-            width: "100%",
-            padding: 8,
-            borderRadius: 6,
-            border: "1px solid #d1d5db",
-            marginBottom: 8,
-          }}
-        />
-        <input
-          placeholder="Email"
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          style={{
-            width: "100%",
-            padding: 8,
-            borderRadius: 6,
-            border: "1px solid #d1d5db",
-            marginBottom: 8,
-          }}
-        />
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          style={{
-            width: "100%",
-            padding: 8,
-            borderRadius: 6,
-            border: "1px solid #d1d5db",
-            marginBottom: 8,
-          }}
-        />
-        <select
-          value={role}
-          onChange={(e) => setRole(e.target.value)}
-          style={{
-            width: "100%",
-            padding: 8,
-            borderRadius: 6,
-            border: "1px solid #d1d5db",
-            marginBottom: 8,
-          }}
-        >
-          <option value="ADMIN">Admin</option>
-          <option value="TEACHER">Teacher</option>
-          <option value="STUDENT">Student</option>
-        </select>
+    <div className="dashboard-card">
+      <div className="card-title">
+        <svg style={{ width: 24, height: 24 }} viewBox="0 0 24 24" fill="currentColor">
+          <path d="M15 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm-9-2V7H4v3H1v2h3v3h2v-3h3v-2H6zm9 4c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+        </svg>
+        Add New Member
       </div>
-      <button
-        type="submit"
-        disabled={submitting}
-        style={{
-          padding: "0.5rem 1rem",
-          borderRadius: 6,
-          border: "none",
-          backgroundColor: "#10b981",
-          color: "#ffffff",
-          fontWeight: 600,
-          cursor: submitting ? "default" : "pointer",
-          opacity: submitting ? 0.7 : 1,
-        }}
-      >
-        {submitting ? "Creating..." : "Create"}
-      </button>
-    </form>
+
+      {error && <p className="pill-error-msg" style={{ borderRadius: '12px', textAlign: 'left' }}>{error}</p>}
+
+      <form onSubmit={handleSubmit}>
+        <div className="dashboard-form-grid">
+          <div className="dashboard-pill-input">
+            <input
+              placeholder="FULL NAME"
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              required
+            />
+          </div>
+          <div className="dashboard-pill-input">
+            <input
+              placeholder="EMAIL ADDRESS"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+          </div>
+          <div className="dashboard-pill-input">
+            <input
+              type="password"
+              placeholder="PASSWORD"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+          </div>
+          <div className="dashboard-pill-input">
+            <select
+              value={role}
+              onChange={(e) => setRole(e.target.value)}
+            >
+              <option value="ADMIN">ADMIN</option>
+              <option value="TEACHER">TEACHER</option>
+              <option value="STUDENT">STUDENT</option>
+            </select>
+          </div>
+        </div>
+        <button
+          type="submit"
+          className="dashboard-submit-btn"
+          disabled={submitting}
+        >
+          {submitting ? "ADDING..." : "REGISTER USER"}
+        </button>
+      </form>
+    </div>
   );
 }
-
