@@ -1,0 +1,215 @@
+/* AdminCourse.css */
+
+.course-page-container {
+    width: 100%;
+}
+
+.section-title {
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: #1e293b;
+    margin-bottom: 5px;
+    letter-spacing: 0.5px;
+}
+
+.title-divider {
+    width: 100%;
+    height: 1px;
+    background: #e2e8f0;
+    margin-bottom: 35px;
+}
+
+.course-grid-layout {
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: 50px;
+    align-items: start;
+}
+
+.form-row {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 25px;
+}
+
+.flex-1 {
+    flex: 1;
+}
+
+.flex-2 {
+    flex: 2;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 25px;
+}
+
+.form-group label {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #475569;
+}
+
+.teacher-chips-container {
+    display: flex;
+    gap: 10px;
+}
+
+.teacher-chip {
+    background: #4caf50;
+    color: white;
+    padding: 6px 14px;
+    border-radius: 50px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.teacher-chip .material-icons-round {
+    font-size: 16px;
+    cursor: pointer;
+}
+
+.add-teacher-btn {
+    position: relative;
+    color: #64748b;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.hidden-select {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.upload-placeholder {
+    height: 60px;
+    border: 2px dashed #e2e8f0;
+    background: transparent;
+    justify-content: center;
+    color: #94a3b8;
+    gap: 10px;
+}
+
+.settings-row {
+    display: flex;
+    gap: 20px;
+    background: #f1f5f9;
+    padding: 25px;
+    border-radius: 25px;
+    margin-bottom: 40px;
+}
+
+.settings-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.pill-input-wrapper.small {
+    padding: 0 15px;
+}
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 20px;
+}
+
+.pill-submit-btn.secondary {
+    background: white;
+    color: #475569;
+    border: 1px solid #e2e8f0;
+    box-shadow: none;
+}
+
+.pill-submit-btn.primary {
+    background: #41b883;
+    /* Matching prototype's save color */
+    box-shadow: 0 4px 12px rgba(65, 184, 131, 0.2);
+}
+
+/* Preview Area */
+.preview-label {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #64748b;
+    margin-bottom: 15px;
+    text-align: right;
+}
+
+.preview-card {
+    border: 1.5px solid #41b883;
+    padding: 25px;
+}
+
+.preview-header {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.preview-icon {
+    width: 50px;
+    height: 50px;
+    background: #f1f5f9;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #64748b;
+}
+
+.preview-meta {
+    flex: 1;
+}
+
+.preview-code {
+    font-size: 1rem;
+    font-weight: 800;
+    color: #1e293b;
+}
+
+.preview-name {
+    font-size: 0.8rem;
+    color: #64748b;
+}
+
+.preview-details {
+    padding-top: 20px;
+    border-top: 1px solid #f1f5f9;
+}
+
+.preview-stat {
+    font-size: 0.85rem;
+    color: #64748b;
+    margin-bottom: 15px;
+}
+
+.status-badge {
+    color: #4caf50;
+    font-weight: 700;
+    font-size: 0.8rem;
+}
+
+@media (max-width: 1200px) {
+    .course-grid-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .preview-label {
+        text-align: left;
+    }
+}
