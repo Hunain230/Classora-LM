@@ -10,13 +10,8 @@ export async function fetchMe() {
   return response.data;
 }
 
-export async function registerInstitute({ institute_name, admin_name, admin_email, password }) {
-  const response = await apiClient.post("/api/institute/register", {
-    institute_name,
-    admin_name,
-    admin_email,
-    password,
-  });
+export async function registerInstitute(data) {
+  const response = await apiClient.post("/api/institute/register", data);
   return response.data;
 }
 
