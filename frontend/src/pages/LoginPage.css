@@ -52,50 +52,55 @@
 
 .login-form-card {
     width: 100%;
+    background: rgba(255, 255, 255, 0.4);
+    backdrop-filter: blur(20px);
+    padding: 20px;
+    border-radius: 40px;
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.08);
 }
 
 .pill-input-wrapper {
-    background: white;
-    border-radius: 50px;
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(10px);
+    border-radius: 24px;
     margin-bottom: 20px;
     display: flex;
     align-items: center;
-    padding: 4px 12px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06);
-    border: 1px solid rgba(0, 0, 0, 0.02);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    padding: 12px 25px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.6) !important;
+    transition: all 0.3s ease;
 }
 
 .pill-input-wrapper:focus-within {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(33, 150, 243, 0.1);
+    transform: translateY(-4px);
+    box-shadow: 0 20px 50px rgba(33, 150, 243, 0.1);
 }
 
 .pill-input-icon {
-    width: 45px;
+    width: 25px;
+    margin-right: 20px;
     display: flex;
     justify-content: center;
-    color: #888;
-}
-
-.pill-input-icon svg {
-    width: 22px;
-    height: 22px;
+    color: #a0aec0;
 }
 
 .pill-input-divider {
     width: 1px;
     height: 24px;
-    background: #f0f0f0;
+    background: #edf2f7;
+    margin-right: 25px;
 }
 
 .pill-input-field {
     flex: 1;
     border: none;
     background: transparent;
-    padding: 14px 20px;
-    font-size: 16px;
-    color: var(--text-dark);
+    padding: 15px 0;
+    font-size: 1.1rem;
+    color: #2d3748;
+    font-weight: 500;
 }
 
 .pill-input-field:focus {
@@ -103,62 +108,66 @@
 }
 
 .pill-input-field::placeholder {
-    color: #bbbbbb;
+    color: #cbd5e0;
     text-transform: uppercase;
-    letter-spacing: 1.5px;
-    font-weight: 500;
-    font-size: 0.85rem;
+    letter-spacing: 5px;
+    font-weight: 800;
+    font-size: 0.7rem;
+    opacity: 0.7;
 }
 
 .login-options {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin: 10px 15px 35px;
-    color: var(--primary-blue);
-    font-size: 0.9rem;
+    margin: 10px 25px 45px;
+    font-size: 0.95rem;
 }
 
 .remember-me-label {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
     cursor: pointer;
-    color: #777;
+    color: #718096;
+    font-weight: 500;
 }
 
 .remember-me-label input {
     width: 18px;
     height: 18px;
-    accent-color: var(--primary-blue);
+    accent-color: #2196F3;
     cursor: pointer;
 }
 
 .forgot-password-link {
-    color: var(--primary-blue);
+    color: #3b82f6;
     text-decoration: none;
-    font-weight: 600;
+    font-weight: 700;
 }
 
 .pill-submit-btn {
     width: 100%;
-    padding: 18px;
-    background: var(--primary-blue);
+    padding: 20px;
+    background: linear-gradient(135deg, #2196F3 0%, #1565C0 100%);
     color: white;
     border: none;
-    border-radius: 50px;
+    border-radius: 20px;
     font-size: 1.1rem;
     font-weight: 700;
-    letter-spacing: 2px;
+    letter-spacing: 1px;
     cursor: pointer;
     transition: all 0.3s ease;
-    box-shadow: 0 8px 20px rgba(33, 150, 243, 0.3);
+    box-shadow: 0 10px 15px -3px rgba(33, 150, 243, 0.3), 0 4px 6px -2px rgba(33, 150, 243, 0.1);
     text-transform: uppercase;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 .pill-submit-btn:hover {
-    background: #1976D2;
-    box-shadow: 0 10px 25px rgba(33, 150, 243, 0.4);
+    transform: translateY(-2px);
+    box-shadow: 0 20px 25px -5px rgba(33, 150, 243, 0.4), 0 10px 10px -5px rgba(33, 150, 243, 0.1);
 }
 
 .pill-error-msg {
