@@ -27,3 +27,30 @@ body {
 * {
   box-sizing: border-box;
 }
+
+/* Global LMS Input Resets for Pill Design */
+.pill-input-wrapper input,
+.pill-input-wrapper select,
+.pill-input-wrapper textarea {
+  border: none !important;
+  background: transparent !important;
+  outline: none !important;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  margin: 0;
+  font-family: inherit;
+  font-size: 0.9rem;
+  color: #1e293b;
+}
+
+.pill-input-wrapper select {
+  cursor: pointer;
+  appearance: none;
+  /* Remove default arrow to style ours if needed */
+}
+
+.pill-input-wrapper input::placeholder {
+  color: #94a3b8;
+  opacity: 0.7;
+}
