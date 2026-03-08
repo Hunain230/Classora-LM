@@ -1,12 +1,26 @@
 from rest_framework import viewsets, permissions, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from .models import Course, Lecture, Assignment, Quiz, Question, AttendanceRecord, AttendanceEntry, Announcement
+from .models import (
+    Course, Lecture, Assignment, Quiz, Question,
+    AttendanceRecord, AttendanceEntry, Announcement, Department
+)
 from .serializers import (
     CourseSerializer, LectureSerializer, AssignmentSerializer, QuizSerializer,
     QuestionSerializer, AttendanceRecordSerializer, AttendanceEntrySerializer,
-    AnnouncementSerializer
+    AnnouncementSerializer, DepartmentSerializer
 )
+
+class DepartmentViewSet(viewsets.ModelViewSet):
+    serializer_class = DepartmentSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        return Department.objects.filter(institute=user.institute)
+
+    def perform_create(self, serializer):
+        serializer.save(institute=self.request.user.institute)
 
 class CourseViewSet(viewsets.ModelViewSet):
     queryset = Course.objects.all()
