@@ -4,6 +4,8 @@ import { fetchMe, logout } from "../../api/auth";
 import InstituteInfo from "./InstituteInfo";
 import UserList from "./UserList";
 import CreateUserForm from "./CreateUserForm";
+import DashboardLayout from "../../components/DashboardLayout";
+import "./Dashboard.css";
 
 export default function AdminDashboard() {
   const [user, setUser] = useState(null);
@@ -21,54 +23,39 @@ export default function AdminDashboard() {
 
   if (error) {
     return (
-      <div style={{ padding: 24 }}>
-        <p style={{ color: "#b91c1c" }}>{error}</p>
+      <div className="dashboard-container">
+        <div className="dashboard-inner">
+          <p className="pill-error-msg">{error}</p>
+        </div>
       </div>
     );
   }
 
   if (!user) {
-    return <div style={{ padding: 24 }}>Loading...</div>;
+    return (
+      <div className="dashboard-container">
+        <div className="dashboard-inner">
+          <div className="dashboard-card">Loading Dashboard...</div>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div style={{ padding: 24 }}>
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: 16,
-        }}
-      >
-        <div>
-          <h1 style={{ marginBottom: 4 }}>Welcome, {user.full_name}</h1>
-          <p style={{ margin: 0, color: "#6b7280" }}>
-            Role: {user.role} | Institute ID: {user.institute_id}
-          </p>
+    <DashboardLayout user={user}>
+      <div className="dashboard-header" style={{ marginBottom: '40px' }}>
+        <div className="dashboard-welcome">
+          <h1 style={{ color: '#1e293b', fontWeight: 800 }}>Welcome, {user.full_name}</h1>
+          <p style={{ color: '#2196F3', fontWeight: 600 }}>INSTITUTE OVERVIEW</p>
         </div>
-        <button
-          type="button"
-          onClick={() => {
-            logout();
-            navigate("/login");
-          }}
-          style={{
-            padding: "0.5rem 0.75rem",
-            borderRadius: 999,
-            border: "1px solid #d1d5db",
-            backgroundColor: "#ffffff",
-            cursor: "pointer",
-            fontSize: 14,
-          }}
-        >
-          Logout
-        </button>
       </div>
+
       <InstituteInfo instituteId={user.institute_id} />
-      <CreateUserForm instituteId={user.institute_id} />
-      <UserList instituteId={user.institute_id} />
-    </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '30px', marginTop: '30px' }}>
+        <CreateUserForm instituteId={user.institute_id} />
+        <UserList instituteId={user.institute_id} />
+      </div>
+    </DashboardLayout>
   );
 }
-
