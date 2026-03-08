@@ -1,12 +1,15 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { loginRequest } from "../api/auth";
+import { Logo } from "../components/Logo";
+import "./LoginPage.css";
 
 export default function LoginPage() {
   const navigate = useNavigate();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [remember, setRemember] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
@@ -40,21 +43,9 @@ export default function LoginPage() {
     } catch (err) {
       if (err.response) {
         const { status, data } = err.response;
-        if (status === 400) {
-          if (typeof data === "string") {
-            setError(data);
-          } else if (data.detail) {
-            setError(data.detail);
-          } else {
-            setError("Please check the form fields.");
-          }
-        } else if (status === 401) {
-          setError(data.detail || "Invalid email or password.");
-        } else {
-          setError("Something went wrong. Please try again.");
-        }
+        setError(typeof data === "string" ? data : (data.detail || "Invalid credentials"));
       } else {
-        setError("Cannot connect to server. Please try again.");
+        setError("Connection failed");
       }
     } finally {
       setSubmitting(false);
@@ -62,148 +53,84 @@ export default function LoginPage() {
   };
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        background: "#f3f4f6",
-      }}
-    >
-      <div
-        style={{
-          width: "100%",
-          maxWidth: 420,
-          background: "#ffffff",
-          padding: "2rem",
-          borderRadius: "0.75rem",
-          boxShadow:
-            "0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -4px rgba(0,0,0,0.1)",
-        }}
-      >
-        <h2 style={{ marginBottom: "0.5rem", fontSize: "1.5rem" }}>
-          Classora Login
-        </h2>
-        <p style={{ marginBottom: "1.5rem", color: "#6b7280", fontSize: 14 }}>
-          Sign in with your email and password.
-        </p>
+    <div className="login-page-container">
+      <div className="login-content">
+        <div className="login-logo-wrapper">
+          <Logo className="login-logo-svg" />
+        </div>
 
-        {error && (
-          <div
-            style={{
-              marginBottom: "1rem",
-              padding: "0.75rem",
-              borderRadius: "0.5rem",
-              background: "#fef2f2",
-              color: "#b91c1c",
-              fontSize: 14,
-            }}
-          >
-            {error}
-          </div>
-        )}
+        <div className="login-slogan">
+          Empowering Education Together
+        </div>
 
-        <form onSubmit={handleSubmit}>
-          <div style={{ marginBottom: "1rem" }}>
-            <label
-              style={{
-                display: "block",
-                marginBottom: 4,
-                fontSize: 14,
-                fontWeight: 500,
-              }}
+        <div className="login-form-card">
+          {error && <div className="pill-error-msg">{error}</div>}
+
+          <form onSubmit={handleSubmit}>
+            <div className="pill-input-wrapper">
+              <div className="pill-input-icon">
+                {/* Envelope icon for Email */}
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z" />
+                </svg>
+              </div>
+              <div className="pill-input-divider"></div>
+              <input
+                className="pill-input-field"
+                type="email"
+                placeholder="EMAIL ADDRESS"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+            </div>
+
+            <div className="pill-input-wrapper">
+              <div className="pill-input-icon">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z" />
+                </svg>
+              </div>
+              <div className="pill-input-divider"></div>
+              <input
+                className="pill-input-field"
+                type="password"
+                placeholder="************"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+            </div>
+
+            <div className="login-options">
+              <label className="remember-me-label">
+                <input
+                  type="checkbox"
+                  checked={remember}
+                  onChange={(e) => setRemember(e.target.checked)}
+                />
+                Remember me
+              </label>
+              <a href="#" className="forgot-password-link">Forgot password?</a>
+            </div>
+
+            <button
+              type="submit"
+              className="pill-submit-btn"
+              disabled={submitting}
             >
-              Email
-            </label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@example.com"
-              style={{
-                width: "100%",
-                padding: "0.625rem 0.75rem",
-                borderRadius: "0.5rem",
-                border: "1px solid #d1d5db",
-                fontSize: 14,
-              }}
-            />
-          </div>
+              {submitting ? "..." : "LOGIN"}
+            </button>
+          </form>
+        </div>
 
-          <div style={{ marginBottom: "1.25rem" }}>
-            <label
-              style={{
-                display: "block",
-                marginBottom: 4,
-                fontSize: 14,
-                fontWeight: 500,
-              }}
-            >
-              Password
-            </label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
-              style={{
-                width: "100%",
-                padding: "0.625rem 0.75rem",
-                borderRadius: "0.5rem",
-                border: "1px solid #d1d5db",
-                fontSize: 14,
-              }}
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={submitting}
-            style={{
-              width: "100%",
-              padding: "0.75rem",
-              borderRadius: "0.5rem",
-              border: "none",
-              backgroundColor: "#2563eb",
-              color: "#ffffff",
-              fontWeight: 600,
-              cursor: submitting ? "default" : "pointer",
-              opacity: submitting ? 0.7 : 1,
-              fontSize: 14,
-            }}
-          >
-            {submitting ? "Logging in..." : "Login"}
+        <p className="pill-register-footer">
+          Don't have an account?
+          <button type="button" onClick={() => navigate("/register")}>
+            Register here
           </button>
-        </form>
+        </p>
       </div>
-
-      <p
-        style={{
-          marginTop: "1rem",
-          fontSize: 14,
-          color: "#6b7280",
-          textAlign: "center",
-        }}
-      >
-        Need an account for your institute?{" "}
-        <button
-          type="button"
-          onClick={() => navigate("/register")}
-          style={{
-            border: "none",
-            background: "transparent",
-            color: "#2563eb",
-            cursor: "pointer",
-            textDecoration: "underline",
-            padding: 0,
-            fontSize: 14,
-          }}
-        >
-          Register institute
-        </button>
-      </p>
     </div>
   );
 }
-
