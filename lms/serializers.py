@@ -1,11 +1,22 @@
 from rest_framework import serializers
-from .models import Course, Lecture, Assignment, Quiz, Question, AttendanceRecord, AttendanceEntry, Announcement
+from .models import (
+    Course, Lecture, Assignment, Quiz, Question, 
+    AttendanceRecord, AttendanceEntry, Announcement, Department
+)
 from accounts.serializers import UserSerializer
+
+class DepartmentSerializer(serializers.ModelSerializer):
+    courses_count = serializers.IntegerField(source='courses.count', read_only=True)
+    class Meta:
+        model = Department
+        fields = ['id', 'name', 'code', 'description', 'institute', 'courses_count', 'created_at']
+        read_only_fields = ['institute']
 
 class CourseSerializer(serializers.ModelSerializer):
     class Meta:
         model = Course
         fields = "__all__"
+        read_only_fields = ['institute']
 
 class LectureSerializer(serializers.ModelSerializer):
     class Meta:
