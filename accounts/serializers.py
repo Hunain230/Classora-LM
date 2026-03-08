@@ -11,6 +11,23 @@ from .models import CustomUser, Institute
 class InstituteRegisterSerializer(serializers.Serializer):
     # Incoming payload for institute + admin creation.
     institute_name = serializers.CharField(max_length=255, allow_blank=False, trim_whitespace=True)
+    institute_code = serializers.CharField(max_length=50, required=False)
+    
+    # Branding & Description
+    description = serializers.CharField(required=False, allow_blank=True)
+    primary_color = serializers.CharField(max_length=20, required=False)
+    
+    # Contact
+    website = serializers.URLField(required=False, allow_blank=True)
+    contact_email = serializers.EmailField(required=False)
+    phone = serializers.CharField(required=False, allow_blank=True)
+    address = serializers.CharField(required=False, allow_blank=True)
+    
+    # Schedule
+    academic_year = serializers.CharField(required=False, allow_blank=True)
+    semester = serializers.CharField(required=False, allow_blank=True)
+    
+    # Admin Info
     admin_name = serializers.CharField(max_length=255, allow_blank=False, trim_whitespace=True)
     admin_email = serializers.EmailField()
     password = serializers.CharField(write_only=True, min_length=6, trim_whitespace=False)
@@ -20,19 +37,37 @@ class InstituteRegisterSerializer(serializers.Serializer):
             raise serializers.ValidationError("A user with this email already exists.")
         return value
 
-    def _generate_unique_institute_code(self, length: int = 10) -> str:
+    def _generate_unique_institute_code(self, name, length: int = 10) -> str:
+        # If user didn't provide a code, generate one from name or random
+        base = name.lower().replace(" ", "-")[:length]
+        if not Institute.objects.filter(institute_code=base).exists():
+            return base
+            
         alphabet = string.ascii_uppercase + string.digits
         for _ in range(20):
-            code = "".join(secrets.choice(alphabet) for _ in range(length))
+            suffix = "".join(secrets.choice(alphabet) for _ in range(4))
+            code = f"{base}-{suffix}"
             if not Institute.objects.filter(institute_code=code).exists():
                 return code
         raise serializers.ValidationError("Could not generate a unique institute code. Please retry.")
 
     @transaction.atomic
     def create(self, validated_data):
+        code = validated_data.get("institute_code")
+        if not code:
+            code = self._generate_unique_institute_code(validated_data["institute_name"])
+            
         institute = Institute.objects.create(
             name=validated_data["institute_name"],
-            institute_code=self._generate_unique_institute_code(),
+            institute_code=code,
+            description=validated_data.get("description"),
+            primary_color=validated_data.get("primary_color", "#2196F3"),
+            website=validated_data.get("website"),
+            contact_email=validated_data.get("contact_email"),
+            phone=validated_data.get("phone"),
+            address=validated_data.get("address"),
+            academic_year=validated_data.get("academic_year"),
+            semester=validated_data.get("semester"),
         )
 
         admin_user = CustomUser.objects.create_user(
@@ -76,7 +111,7 @@ class LoginSerializer(serializers.Serializer):
 class InstituteSerializer(serializers.ModelSerializer):
     class Meta:
         model = Institute
-        fields = ("id", "name", "institute_code", "created_at")
+        fields = "__all__"
 
 
 class UserSerializer(serializers.ModelSerializer):
