@@ -10,6 +10,22 @@ from django.utils import timezone
 class Institute(models.Model):
     name = models.CharField(max_length=255)
     institute_code = models.CharField(max_length=50, unique=True)
+    
+    # New Branding & Description Fields
+    logo = models.ImageField(upload_to="institute_logos/", null=True, blank=True)
+    primary_color = models.CharField(max_length=20, default="#2196F3")
+    description = models.TextField(null=True, blank=True)
+    
+    # Contact Info
+    website = models.URLField(max_length=255, null=True, blank=True)
+    contact_email = models.EmailField(null=True, blank=True)
+    phone = models.CharField(max_length=20, null=True, blank=True)
+    address = models.TextField(null=True, blank=True)
+    
+    # Schedule
+    academic_year = models.CharField(max_length=20, null=True, blank=True)
+    semester = models.CharField(max_length=20, null=True, blank=True)
+    
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self) -> str:
