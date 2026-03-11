@@ -13,13 +13,19 @@ export default function AnnouncementsPage() {
     useEffect(() => {
         fetchAnnouncements();
         apiClient.get("/api/lms/courses/")
-            .then(res => setCourses(res.data.results || []))
+            .then(res => {
+                const data = Array.isArray(res.data) ? res.data : (res.data.results || []);
+                setCourses(data);
+            })
             .catch(err => console.error(err));
     }, []);
 
     const fetchAnnouncements = () => {
         apiClient.get("/api/lms/announcements/")
-            .then(res => setAnnouncements(res.data.results || []))
+            .then(res => {
+                const data = Array.isArray(res.data) ? res.data : (res.data.results || []);
+                setAnnouncements(data);
+            })
             .catch(err => console.error(err));
     };
 
@@ -79,9 +85,9 @@ export default function AnnouncementsPage() {
                                     <textarea name="content" value={formData.content} onChange={handleInputChange} placeholder="Type announcement details here..." required style={{ height: '100%', width: '100%', background: 'transparent', border: 'none', resize: 'none' }} />
                                 </div>
                             </div>
-                            <div className="form-actions" style={{ justifyContent: 'flex-end' }}>
-                                <button type="submit" className="pill-submit-btn primary" style={{ width: '200px' }} disabled={submitting}>
-                                    {submitting ? "Posting..." : "Post Announcement"}
+                            <div className="form-actions" style={{ justifyContent: 'flex-end', marginTop: '30px' }}>
+                                <button type="submit" className="pill-submit-btn primary" style={{ width: '300px', padding: '24px' }} disabled={submitting}>
+                                    {submitting ? "POSTING..." : "POST ANNOUNCEMENT"}
                                 </button>
                             </div>
                         </form>

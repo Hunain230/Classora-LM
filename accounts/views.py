@@ -145,6 +145,10 @@ def users_list(request):
     page_size = max(min(page_size, 100), 1)
 
     users_qs = CustomUser.objects.filter(institute_id=institute_id)
+    role = request.query_params.get("role")
+    if role:
+        users_qs = users_qs.filter(role=role)
+        
     if search:
         users_qs = users_qs.filter(
             Q(full_name__icontains=search) | Q(email__icontains=search)
@@ -189,20 +193,26 @@ def create_user(request):
 @permission_classes([IsAuthenticated, IsTeacherRole])
 def teacher_dashboard(request):
     """
-    Basic teacher dashboard data for the current teacher.
+    Teacher dashboard data: includes students in institute and courses assigned to this teacher.
     """
+    from lms.models import Course
+    from lms.serializers import CourseSerializer
+    
     user = request.user
 
     students = CustomUser.objects.filter(
         institute_id=user.institute_id, role=CustomUser.Role.STUDENT
     ).order_by("full_name")
-
     students_serialized = UserSerializer(students, many=True)
+
+    courses = Course.objects.filter(teachers=user)
+    courses_serialized = CourseSerializer(courses, many=True)
 
     return Response(
         {
             "user": UserSerializer(user).data,
             "students": students_serialized.data,
+            "courses": courses_serialized.data,
         },
         status=status.HTTP_200_OK,
     )
@@ -212,8 +222,11 @@ def teacher_dashboard(request):
 @permission_classes([IsAuthenticated, IsStudentRole])
 def student_dashboard(request):
     """
-    Basic student dashboard data for the current student.
+    Student dashboard data: includes institute info and courses the student is enrolled in.
     """
+    from lms.models import Course
+    from lms.serializers import CourseSerializer
+    
     user = request.user
     institute = user.institute
 
@@ -221,10 +234,14 @@ def student_dashboard(request):
     if institute is not None:
         institute_data = InstituteSerializer(institute).data
 
+    courses = Course.objects.filter(students=user, is_published=True)
+    courses_serialized = CourseSerializer(courses, many=True)
+
     return Response(
         {
             "user": UserSerializer(user).data,
             "institute": institute_data,
+            "courses": courses_serialized.data,
         },
         status=status.HTTP_200_OK,
     )

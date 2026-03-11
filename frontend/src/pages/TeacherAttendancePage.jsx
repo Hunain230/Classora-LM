@@ -17,7 +17,10 @@ export default function TeacherAttendancePage() {
 
     useEffect(() => {
         apiClient.get("/api/lms/courses/")
-            .then(res => setCourses(res.data.results || []))
+            .then(res => {
+                const data = Array.isArray(res.data) ? res.data : (res.data.results || []);
+                setCourses(data);
+            })
             .catch(err => console.error("Error fetching courses", err));
     }, []);
 
@@ -26,7 +29,7 @@ export default function TeacherAttendancePage() {
             // Fetch students for the selected course
             apiClient.get(`/api/users/?role=STUDENT&institute=${user.institute_id}`)
                 .then(res => {
-                    const list = res.data.results || [];
+                    const list = Array.isArray(res.data) ? res.data : (res.data.results || []);
                     setStudents(list);
                     // Initialize attendance
                     const init = {};

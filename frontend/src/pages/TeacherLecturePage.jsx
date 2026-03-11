@@ -27,7 +27,10 @@ export default function TeacherLecturePage() {
 
     useEffect(() => {
         apiClient.get("/api/lms/courses/")
-            .then(res => setCourses(res.data.results || []))
+            .then(res => {
+                const data = Array.isArray(res.data) ? res.data : (res.data.results || []);
+                setCourses(data);
+            })
             .catch(err => console.error("Error fetching courses", err));
     }, []);
 

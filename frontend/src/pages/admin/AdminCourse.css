@@ -53,9 +53,13 @@
     color: #475569;
 }
 
-.teacher-chips-container {
+.teacher-chips-container.multi-select {
     display: flex;
+    flex-wrap: wrap;
     gap: 10px;
+    padding: 10px 15px;
+    min-height: 55px;
+    align-items: center;
 }
 
 .teacher-chip {
@@ -63,24 +67,38 @@
     color: white;
     padding: 6px 14px;
     border-radius: 50px;
-    font-size: 0.85rem;
-    font-weight: 600;
+    font-size: 0.8rem;
+    font-weight: 700;
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
+    box-shadow: 0 2px 6px rgba(76, 175, 80, 0.2);
 }
 
-.teacher-chip .material-icons-round {
-    font-size: 16px;
+.chip-close {
+    font-size: 14px !important;
     cursor: pointer;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    padding: 2px;
+}
+
+.chip-close:hover {
+    background: rgba(255, 255, 255, 0.4);
 }
 
 .add-teacher-btn {
     position: relative;
-    color: #64748b;
-    font-size: 0.85rem;
-    font-weight: 600;
+    color: #41b883;
+    font-size: 0.8rem;
+    font-weight: 700;
     cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 12px;
+    border: 1.5px dashed #41b883;
+    border-radius: 50px;
 }
 
 .hidden-select {
@@ -105,9 +123,10 @@
 .settings-row {
     display: flex;
     gap: 20px;
-    background: #f1f5f9;
-    padding: 25px;
-    border-radius: 25px;
+    background: #f8fafc;
+    padding: 30px;
+    border-radius: 30px;
+    border: 1px solid #f1f5f9;
     margin-bottom: 40px;
 }
 
@@ -118,27 +137,84 @@
     gap: 8px;
 }
 
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 30px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
 .pill-input-wrapper.small {
     padding: 0 15px;
 }
 
-.form-actions {
+.pill-submit-btn {
+    padding: 22px 50px;
+    border-radius: 50px;
+    font-weight: 900;
+    font-size: 1.1rem;
+    letter-spacing: 2px;
+    line-height: 1.2;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    border: none;
     display: flex;
-    justify-content: flex-end;
-    gap: 20px;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
 }
 
 .pill-submit-btn.secondary {
     background: white;
     color: #475569;
-    border: 1px solid #e2e8f0;
-    box-shadow: none;
+    border: 1.5px solid #e2e8f0;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.03);
+}
+
+.pill-submit-btn.secondary:hover {
+    background: #f8fafc;
+    border-color: #cbd5e1;
+    color: #1e293b;
 }
 
 .pill-submit-btn.primary {
-    background: #41b883;
-    /* Matching prototype's save color */
-    box-shadow: 0 4px 12px rgba(65, 184, 131, 0.2);
+    background: #2196F3;
+    color: white;
+    box-shadow: 0 10px 20px rgba(33, 150, 243, 0.2);
+    border: none;
+}
+
+.pill-submit-btn.primary:hover {
+    background: #1976D2;
+    transform: translateY(-2px);
+    box-shadow: 0 12px 25px rgba(33, 150, 243, 0.3);
+}
+
+.pill-input-wrapper {
+    background: #f8fafc;
+    border: 2px solid #f1f5f9;
+    border-radius: 18px;
+    padding: 12px 20px;
+    transition: all 0.3s ease;
+}
+
+.pill-input-wrapper:focus-within {
+    border-color: #2196F3;
+    background: white;
+    box-shadow: 0 0 0 4px rgba(33, 150, 243, 0.1);
+}
+
+.pill-input-wrapper input,
+.pill-input-wrapper select {
+    border: none;
+    background: transparent;
+    width: 100%;
+    outline: none;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #1e293b;
 }
 
 /* Preview Area */

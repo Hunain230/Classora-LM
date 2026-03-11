@@ -46,7 +46,8 @@ export default function TeacherDashboard() {
     );
   }
 
-  const { students } = data;
+  const students = data?.students || [];
+  const courses = data?.courses || [];
 
   return (
     <DashboardLayout user={user}>
@@ -57,48 +58,76 @@ export default function TeacherDashboard() {
         </div>
       </div>
 
-      <div className="dashboard-card">
-        <div className="card-title">
-          <span className="material-icons-round">groups</span>
-          Students in your institute
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '30px', marginBottom: '30px' }}>
+        {/* Courses Section */}
+        <div className="dashboard-card" style={{ flex: '1 1 500px', marginBottom: 0 }}>
+          <div className="card-title">
+            <span className="material-icons-round">import_contacts</span>
+            Assigned Courses
+          </div>
+          <div className="dashboard-table-wrapper" style={{ maxHeight: '300px', overflowY: 'auto' }}>
+            <table className="dashboard-table">
+              <thead>
+                <tr>
+                  <th>Code</th>
+                  <th>Name</th>
+                </tr>
+              </thead>
+              <tbody>
+                {courses?.length === 0 ? (
+                  <tr><td colSpan="2" style={{ textAlign: 'center', padding: '20px' }}>No courses assigned.</td></tr>
+                ) : (
+                  courses.map(c => (
+                    <tr key={c.id}>
+                      <td style={{ fontWeight: 700, color: '#2196F3' }}>{c.code}</td>
+                      <td>{c.name}</td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
 
-        <div className="dashboard-table-wrapper">
-          <table className="dashboard-table">
-            <thead>
-              <tr>
-                <th>Full Name</th>
-                <th>Email</th>
-                <th>Role</th>
-              </tr>
-            </thead>
-            <tbody>
-              {students.length === 0 ? (
+        {/* Students Section */}
+        <div className="dashboard-card" style={{ flex: '1 1 500px', marginBottom: 0 }}>
+          <div className="card-title">
+            <span className="material-icons-round">groups</span>
+            Recent Students
+          </div>
+          <div className="dashboard-table-wrapper" style={{ maxHeight: '300px', overflowY: 'auto' }}>
+            <table className="dashboard-table">
+              <thead>
                 <tr>
-                  <td colSpan="3" style={{ textAlign: 'center', padding: '40px' }}>No students found yet.</td>
+                  <th>Full Name</th>
+                  <th>Role</th>
                 </tr>
-              ) : (
-                students.map((s) => (
-                  <tr key={s.id}>
-                    <td>{s.full_name}</td>
-                    <td>{s.email}</td>
-                    <td><span style={{ color: '#4CAF50', fontWeight: 600, background: 'rgba(76, 175, 80, 0.1)', padding: '4px 12px', borderRadius: '50px', fontSize: '0.75rem' }}>STUDENT</span></td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {students.length === 0 ? (
+                  <tr><td colSpan="2" style={{ textAlign: 'center', padding: '20px' }}>No students found.</td></tr>
+                ) : (
+                  students.slice(0, 10).map((s) => (
+                    <tr key={s.id}>
+                      <td>{s.full_name}</td>
+                      <td><span style={{ color: '#4CAF50', fontWeight: 600, background: 'rgba(76, 175, 80, 0.1)', padding: '4px 10px', borderRadius: '50px', fontSize: '0.7rem' }}>STUDENT</span></td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
 
-      <div className="dashboard-form-grid" style={{ marginTop: '20px' }}>
+      <div className="dashboard-form-grid">
         <div className="dashboard-card" style={{ marginBottom: 0 }}>
           <div style={{ fontSize: '0.85rem', color: '#666', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '10px' }}>Total Students</div>
           <div style={{ fontSize: '2rem', fontWeight: 800, color: '#2196F3' }}>{students.length}</div>
         </div>
         <div className="dashboard-card" style={{ marginBottom: 0 }}>
-          <div style={{ fontSize: '0.85rem', color: '#666', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '10px' }}>Active Classes</div>
-          <div style={{ fontSize: '2rem', fontWeight: 800, color: '#2196F3' }}>--</div>
+          <div style={{ fontSize: '0.85rem', color: '#666', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '10px' }}>Active Courses</div>
+          <div style={{ fontSize: '2rem', fontWeight: 800, color: '#2196F3' }}>{courses?.length || 0}</div>
         </div>
       </div>
     </DashboardLayout>

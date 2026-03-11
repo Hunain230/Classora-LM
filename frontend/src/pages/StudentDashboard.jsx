@@ -45,7 +45,7 @@ export default function StudentDashboard() {
     );
   }
 
-  const { institute } = data;
+  const { institute, courses } = data;
 
   return (
     <DashboardLayout user={user}>
@@ -82,21 +82,47 @@ export default function StudentDashboard() {
         )}
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px', marginTop: '24px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '24px', marginTop: '24px' }}>
         <div className="dashboard-card" style={{ marginBottom: 0 }}>
           <div className="card-title">
             <span className="material-icons-round">import_contacts</span>
-            My Courses
+            My Enrolled Courses
           </div>
-          <p style={{ color: '#888', fontSize: '0.9rem' }}>You haven't been enrolled in any courses yet.</p>
+          {courses?.length === 0 ? (
+            <p style={{ color: '#888', fontSize: '0.9rem', padding: '20px 0' }}>You haven't been enrolled in any courses yet.</p>
+          ) : (
+            <div className="dashboard-table-wrapper">
+              <table className="dashboard-table">
+                <thead>
+                  <tr>
+                    <th>Code</th>
+                    <th>Course Name</th>
+                    <th>Semester</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {courses.map(c => (
+                    <tr key={c.id}>
+                      <td style={{ fontWeight: 700, color: '#2196F3' }}>{c.code}</td>
+                      <td>{c.name}</td>
+                      <td>{c.semester}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
 
         <div className="dashboard-card" style={{ marginBottom: 0 }}>
           <div className="card-title">
             <span className="material-icons-round">campaign</span>
-            Announcements
+            Latest Announcements
           </div>
-          <p style={{ color: '#888', fontSize: '0.9rem' }}>All quiet here. Check back later for updates from your institute.</p>
+          <div style={{ padding: '20px 0', textAlign: 'center' }}>
+            <span className="material-icons-round" style={{ fontSize: '3rem', color: '#f1f5f9', marginBottom: '10px' }}>notifications_paused</span>
+            <p style={{ color: '#94a3b8', fontSize: '0.85rem' }}>No new announcements from your teachers.</p>
+          </div>
         </div>
       </div>
     </DashboardLayout>

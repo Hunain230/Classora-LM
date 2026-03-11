@@ -79,22 +79,29 @@
 }
 
 .bulk-btn {
-    padding: 8px 15px;
+    padding: 15px 35px;
     border-radius: 50px;
-    font-size: 0.8rem;
-    font-weight: 800;
+    font-size: 0.9rem;
+    font-weight: 900;
     border: none;
     cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.08);
+}
+
+.bulk-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.12);
 }
 
 .bulk-btn.all-p {
-    background: #dcfce7;
-    color: #15803d;
+    background: #41b883;
+    color: white;
 }
 
 .bulk-btn.all-a {
-    background: #fee2e2;
-    color: #b91c1c;
+    background: #ef4444;
+    color: white;
 }
 
 .status-radio {

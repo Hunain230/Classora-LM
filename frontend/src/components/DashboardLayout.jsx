@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { logout } from "../api/auth";
 import { Logo } from "../components/Logo";
@@ -7,16 +7,21 @@ import "./DashboardLayout.css";
 export default function DashboardLayout({ children, user }) {
     const navigate = useNavigate();
     const location = useLocation();
+    const [showDropdown, setShowDropdown] = useState(false);
 
     const menuItems = [
-        { label: "Dashboard", path: "/dashboard", icon: "grid_view" },
-        { label: "Courses", path: "/courses", icon: "import_contacts" },
-        { label: "Assignments", path: "/assignments", "icon": "assignment" },
-        { label: "Quizzes", path: "/quizzes", icon: "quiz" },
-        { label: "Attendance", path: "/attendance", icon: "how_to_reg" },
-        { label: "Analytics", path: "/analytics", icon: "analytics" },
-        { label: "Announcements", path: "/announcements", icon: "campaign" },
+        { label: "Dashboard", path: "/dashboard", icon: "grid_view", roles: ["ADMIN", "TEACHER", "STUDENT"] },
+        { label: "Courses", path: "/courses", icon: "import_contacts", roles: ["ADMIN", "TEACHER", "STUDENT"] },
+        { label: "Departments", path: "/departments", icon: "domain", roles: ["ADMIN"] },
+        { label: "Enrollment", path: "/enrollment", icon: "person_add", roles: ["ADMIN"] },
+        { label: "Assignments", path: "/assignments", icon: "assignment", roles: ["TEACHER", "STUDENT"] },
+        { label: "Quizzes", path: "/quizzes", icon: "quiz", roles: ["TEACHER", "STUDENT"] },
+        { label: "Attendance", path: "/attendance", icon: "how_to_reg", roles: ["TEACHER", "STUDENT"] },
+        { label: "Analytics", path: "/analytics", icon: "analytics", roles: ["ADMIN", "TEACHER"] },
+        { label: "Announcements", path: "/announcements", icon: "campaign", roles: ["ADMIN", "TEACHER", "STUDENT"] },
     ];
+
+    const filteredItems = menuItems.filter(item => item.roles.includes(user?.role));
 
     // Map user role-based paths to /dashboard
     const getDashboardPath = () => {
@@ -41,7 +46,7 @@ export default function DashboardLayout({ children, user }) {
                 </div>
 
                 <nav className="sidebar-nav">
-                    {menuItems.map((item) => {
+                    {filteredItems.map((item) => {
                         const isActive = location.pathname === item.path || (item.path === "/dashboard" && location.pathname.match(/^\/(admin|teacher|student)$/));
                         return (
                             <button
@@ -66,7 +71,7 @@ export default function DashboardLayout({ children, user }) {
                         </div>
                     </div>
                     <div className="topbar-right">
-                        <div className="user-profile">
+                        <div className="user-profile" onClick={() => setShowDropdown(!showDropdown)}>
                             <div className="user-info">
                                 <div className="user-name">{user?.full_name}</div>
                                 <div className="user-role">{user?.role} ▼</div>
@@ -74,6 +79,15 @@ export default function DashboardLayout({ children, user }) {
                             <div className="user-avatar">
                                 {user?.full_name?.charAt(0) || "U"}
                             </div>
+
+                            {showDropdown && (
+                                <div className="user-dropdown">
+                                    <button className="user-dropdown-item logout" onClick={handleLogout}>
+                                        <span className="material-icons-round">logout</span>
+                                        Log Out
+                                    </button>
+                                </div>
+                            )}
                         </div>
                         <button className="topbar-icon-btn">
                             <span className="material-icons-round">notifications</span>
