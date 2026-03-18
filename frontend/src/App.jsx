@@ -1,6 +1,7 @@
 import "./App.css";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import LoginPage from "./pages/LoginPage";
+import LandingPage from "./pages/LandingPage";
 import InstituteRegisterPage from "./pages/InstituteRegisterPage";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import TeacherDashboard from "./pages/TeacherDashboard";
@@ -42,6 +43,7 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
+        <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<InstituteRegisterPage />} />
         <Route
@@ -89,7 +91,7 @@ function App() {
         <Route path="/analytics" element={<AnalyticsPage />} />
         <Route path="/announcements" element={<AnnouncementsPage />} />
 
-        <Route path="*" element={<LoginPage />} />
+        <Route path="*" element={<LandingPage />} />
       </Routes>
     </BrowserRouter>
   );
