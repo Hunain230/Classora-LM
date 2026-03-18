@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, Link } from "react-router-dom";
 import { logout } from "../api/auth";
 import { Logo } from "../components/Logo";
 import "./DashboardLayout.css";
