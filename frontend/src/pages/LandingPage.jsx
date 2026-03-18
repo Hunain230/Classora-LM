@@ -57,7 +57,7 @@ export default function LandingPage() {
                 <div className="hero-content">
                     <div className="hero-badge fade-in-up" style={{ animationDelay: '0.1s' }}>Welcome to the Future of Learning</div>
                     <h1 className="hero-title fade-in-up" style={{ animationDelay: '0.2s' }}>
-                        Empower Education with <br/><span className="gradient-text">Classora LMS</span>
+                        Empower Education with <br /><span className="gradient-text">Classora LMS</span>
                     </h1>
                     <p className="hero-subtitle fade-in-up" style={{ animationDelay: '0.3s' }}>
                         A premium, multi-tenant learning management system designed to streamline administration, engage students, and equip teachers with modern tools.
@@ -94,17 +94,17 @@ export default function LandingPage() {
             <section className="landing-feature-section section-spacing">
                 <div className="feature-container">
                     <div className="feature-image-wrapper reveal slide-in-left" ref={addToRefs}>
-                        <img 
-                            src="/thumbs-up.png" 
-                            alt="Students learning together" 
-                            className="feature-img shadow-premium" 
+                        <img
+                            src="/thumbs-up.png"
+                            alt="Students learning together"
+                            className="feature-img shadow-premium"
                         />
                         <div className="floating-badge badge-bottom-right">
                             <span className="material-icons-round text-blue">verified</span>
                             <span>Engaging Environment</span>
                         </div>
                     </div>
-                    
+
                     <div className="feature-text reveal slide-in-right" ref={addToRefs}>
                         <h2 className="section-heading">Built for <span className="gradient-text">Connection</span></h2>
                         <p className="section-paragraph">
@@ -124,7 +124,7 @@ export default function LandingPage() {
                 <div className="feature-container reverse-layout">
                     <div className="feature-text reveal slide-in-left" ref={addToRefs}>
                         <div className="hero-badge ai-badge">Our Future Vision</div>
-                        <h2 className="section-heading">Futuristic Learning with <br/><span className="gradient-text">AI Assistance</span></h2>
+                        <h2 className="section-heading">Futuristic Learning with <br /><span className="gradient-text">AI Assistance</span></h2>
                         <p className="section-paragraph">
                             We are building the classroom of the future. Soon, Classora will feature a deeply integrated AI Assistant designed to personalize learning paths, predict student struggles before they happen, and auto-grade assignments with human-like precision.
                         </p>
@@ -133,17 +133,17 @@ export default function LandingPage() {
                             <li><span className="material-icons-round text-purple">auto_graph</span> Predictive Performance Analytics</li>
                             <li><span className="material-icons-round text-purple">smart_toy</span> Automated grading and feedback generation</li>
                         </ul>
-                        <button className="nav-btn primary outline mt-4" onClick={() => window.scrollTo({top: 0, behavior: 'smooth'})}>
+                        <button className="nav-btn primary outline mt-4" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
                             Join the Waitlist
                         </button>
                     </div>
 
                     <div className="feature-image-wrapper reveal slide-in-right" ref={addToRefs}>
                         <div className="glow-effect behind-image"></div>
-                        <img 
-                            src="/ai-learning.png" 
-                            alt="Futuristic AI Learning Hologram" 
-                            className="feature-img shadow-premium glass-border" 
+                        <img
+                            src="/ai-learning-robot.png"
+                            alt="Futuristic AI Learning Hologram"
+                            className="feature-img shadow-premium glass-border"
                         />
                         <div className="floating-badge badge-top-left glass-badge">
                             <span className="material-icons-round text-purple">memory</span>
