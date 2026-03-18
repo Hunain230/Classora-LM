@@ -41,7 +41,9 @@ export default function DashboardLayout({ children, user }) {
             {/* Sidebar */}
             <aside className="layout-sidebar">
                 <div className="sidebar-header">
-                    <Logo className="sidebar-logo" />
+                    <Link to="/" style={{ textDecoration: 'none' }}>
+                        <Logo className="sidebar-logo" />
+                    </Link>
                     <div className="sidebar-menu-label">MENU</div>
                 </div>
 
