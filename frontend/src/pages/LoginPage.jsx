@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { loginRequest } from "../api/auth";
 import { Logo } from "../components/Logo";
 import "./LoginPage.css";
@@ -56,7 +56,9 @@ export default function LoginPage() {
     <div className="login-page-container">
       <div className="login-content">
         <div className="login-logo-wrapper">
-          <Logo className="login-logo-svg" />
+          <Link to="/">
+            <Logo className="login-logo-svg" />
+          </Link>
         </div>
 
         <div className="login-slogan">
