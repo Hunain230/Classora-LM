@@ -56,9 +56,17 @@ class Quiz(models.Model):
     title = models.CharField(max_length=255)
     instructions = models.TextField(null=True, blank=True)
     total_time_minutes = models.PositiveIntegerField(default=30)
+    start_time = models.DateTimeField(null=True, blank=True)
+    end_time = models.DateTimeField(null=True, blank=True)
     show_answers_after = models.BooleanField(default=True)
     is_published = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
+
+    def is_active(self):
+        now = timezone.now()
+        if self.start_time and self.end_time:
+            return self.is_published and self.start_time <= now <= self.end_time
+        return self.is_published
 
 class Question(models.Model):
     class Type(models.TextChoices):
@@ -120,3 +128,15 @@ class Notification(models.Model):
     message = models.TextField()
     is_read = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
+
+class QuizAttempt(models.Model):
+    quiz = models.ForeignKey(Quiz, on_delete=models.CASCADE, related_name="attempts")
+    student = models.ForeignKey(CustomUser, on_delete=models.CASCADE, limit_choices_to={'role': 'STUDENT'})
+    answers = models.JSONField(default=dict)  # { question_id: selected_option_index }
+    score = models.FloatField(null=True, blank=True)
+    total_marks = models.FloatField(null=True, blank=True)
+    submitted_at = models.DateTimeField(auto_now_add=True)
+    time_taken_seconds = models.PositiveIntegerField(null=True, blank=True)
+
+    class Meta:
+        unique_together = ('quiz', 'student')
