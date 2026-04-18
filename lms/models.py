@@ -45,6 +45,7 @@ class Assignment(models.Model):
     title = models.CharField(max_length=255)
     description = models.TextField()
     attachment = models.FileField(upload_to="assignments/", null=True, blank=True)
+    links = models.JSONField(default=list, blank=True)  # [{"label": "Resource", "url": "https://..."}]
     due_date = models.DateTimeField()
     total_marks = models.PositiveIntegerField(default=100)
     allow_late_submission = models.BooleanField(default=True)
@@ -105,6 +106,7 @@ class AssignmentSubmission(models.Model):
     student = models.ForeignKey(CustomUser, on_delete=models.CASCADE, limit_choices_to={'role': 'STUDENT'})
     submitted_at = models.DateTimeField(auto_now_add=True)
     attachment = models.FileField(upload_to="assignment_submissions/", null=True, blank=True)
+    links = models.JSONField(default=list, blank=True)  # [{"label": "My Doc", "url": "https://..."}]
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.ON_TIME)
     score = models.IntegerField(null=True, blank=True)
     feedback = models.TextField(null=True, blank=True)
