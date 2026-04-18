@@ -3,12 +3,14 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from .models import (
     Course, Lecture, Assignment, Quiz, Question,
-    AttendanceRecord, AttendanceEntry, Announcement, Department
+    AttendanceRecord, AttendanceEntry, Announcement, Department,
+    AssignmentSubmission, Notification
 )
 from .serializers import (
     CourseSerializer, LectureSerializer, AssignmentSerializer, QuizSerializer,
     QuestionSerializer, AttendanceRecordSerializer, AttendanceEntrySerializer,
-    AnnouncementSerializer, DepartmentSerializer
+    AnnouncementSerializer, DepartmentSerializer, AssignmentSubmissionSerializer,
+    NotificationSerializer
 )
 
 class DepartmentViewSet(viewsets.ModelViewSet):
@@ -72,6 +74,19 @@ class AssignmentViewSet(viewsets.ModelViewSet):
         elif user.role == "STUDENT":
             return self.queryset.filter(course__students=user)
         return self.queryset.none()
+
+    def perform_create(self, serializer):
+        assignment = serializer.save()
+        # notify students
+        students = assignment.course.students.all()
+        notifications = []
+        for student in students:
+            notifications.append(Notification(
+                user=student,
+                title="New Assignment",
+                message=f"A new assignment '{assignment.title}' has been uploaded for {assignment.course.name}."
+            ))
+        Notification.objects.bulk_create(notifications)
 
 class QuizViewSet(viewsets.ModelViewSet):
     queryset = Quiz.objects.all()
@@ -146,3 +161,41 @@ class AnnouncementViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user, institute=self.request.user.institute)
+
+class AssignmentSubmissionViewSet(viewsets.ModelViewSet):
+    queryset = AssignmentSubmission.objects.all()
+    serializer_class = AssignmentSubmissionSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.role == "ADMIN":
+            return self.queryset.filter(assignment__course__institute=user.institute)
+        elif user.role == "TEACHER":
+            return self.queryset.filter(assignment__course__teachers=user)
+        elif user.role == "STUDENT":
+            return self.queryset.filter(student=user)
+        return self.queryset.none()
+
+    def perform_create(self, serializer):
+        assignment = serializer.validated_data.get('assignment')
+        from django.utils import timezone
+        
+        status_val = "ON_TIME"
+        if timezone.now() > assignment.due_date:
+            status_val = "LATE"
+            
+        serializer.save(student=self.request.user, status=status_val)
+
+class NotificationViewSet(viewsets.ModelViewSet):
+    queryset = Notification.objects.all()
+    serializer_class = NotificationSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return self.queryset.filter(user=self.request.user).order_by('-created_at')
+
+    @action(detail=False, methods=['post'])
+    def mark_all_read(self, request):
+        self.get_queryset().update(is_read=True)
+        return Response({'status': 'all marked read'})
