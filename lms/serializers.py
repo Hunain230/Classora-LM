@@ -1,7 +1,8 @@
 from rest_framework import serializers
 from .models import (
     Course, Lecture, Assignment, Quiz, Question, 
-    AttendanceRecord, AttendanceEntry, Announcement, Department
+    AttendanceRecord, AttendanceEntry, Announcement, Department,
+    AssignmentSubmission, Notification
 )
 from accounts.serializers import UserSerializer
 
@@ -55,3 +56,16 @@ class AnnouncementSerializer(serializers.ModelSerializer):
     class Meta:
         model = Announcement
         fields = "__all__"
+
+class AssignmentSubmissionSerializer(serializers.ModelSerializer):
+    student_name = serializers.ReadOnlyField(source="student.full_name")
+    class Meta:
+        model = AssignmentSubmission
+        fields = "__all__"
+        read_only_fields = ['student', 'submitted_at', 'status']
+
+class NotificationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Notification
+        fields = "__all__"
+        read_only_fields = ['user', 'created_at']
