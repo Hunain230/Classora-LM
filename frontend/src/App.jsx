@@ -8,6 +8,7 @@ import TeacherDashboard from "./pages/TeacherDashboard";
 import StudentDashboard from "./pages/StudentDashboard";
 import CoursesPage from "./pages/CoursesPage";
 import TeacherAssignmentsPage from "./pages/TeacherAssignmentsPage";
+import StudentAssignmentsPage from "./pages/StudentAssignmentsPage";
 import TeacherQuizzesPage from "./pages/TeacherQuizzesPage";
 import TeacherAttendancePage from "./pages/TeacherAttendancePage";
 import TeacherLecturePage from "./pages/TeacherLecturePage";
@@ -37,6 +38,15 @@ function RequireRole({ role, children }) {
   }
 
   return children;
+}
+
+function AssignmentsRoute() {
+  const stored = window.localStorage.getItem("current_user");
+  if (!stored) return <Navigate to="/login" replace />;
+  let user;
+  try { user = JSON.parse(stored); } catch { return <Navigate to="/login" replace />; }
+  if (user.role === "STUDENT") return <StudentAssignmentsPage />;
+  return <TeacherAssignmentsPage />;
 }
 
 function App() {
@@ -84,7 +94,7 @@ function App() {
           </RequireRole>
         } />
 
-        <Route path="/assignments" element={<TeacherAssignmentsPage />} />
+        <Route path="/assignments" element={<AssignmentsRoute />} />
         <Route path="/quizzes" element={<TeacherQuizzesPage />} />
         <Route path="/attendance" element={<TeacherAttendancePage />} />
         <Route path="/lectures" element={<TeacherLecturePage />} />
