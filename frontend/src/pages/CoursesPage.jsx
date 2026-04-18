@@ -3,6 +3,7 @@ import CreateCoursePage from './admin/CreateCoursePage';
 import { apiClient } from '../api/client';
 import DashboardLayout from '../components/DashboardLayout';
 import { useNavigate } from 'react-router-dom';
+import './CourseStream.css';
 
 const BACKEND = "http://localhost:8000";
 function openFile(url) {
@@ -11,249 +12,328 @@ function openFile(url) {
     window.open(href, "_blank", "noopener,noreferrer");
 }
 
+const BANNER_COLORS = [
+    "linear-gradient(135deg, #1565C0, #42A5F5)",
+    "linear-gradient(135deg, #6d28d9, #a78bfa)",
+    "linear-gradient(135deg, #065f46, #34d399)",
+    "linear-gradient(135deg, #92400e, #fbbf24)",
+    "linear-gradient(135deg, #9d174d, #f472b6)",
+    "linear-gradient(135deg, #1e3a5f, #3b82f6)",
+];
+
 export default function CoursesPage() {
     const user = JSON.parse(localStorage.getItem("current_user") || "{}");
     const navigate = useNavigate();
-    const [courses, setCourses] = React.useState([]);
+    const isStudent = user.role === "STUDENT";
+
+    const [courses, setCourses]       = React.useState([]);
     const [assignments, setAssignments] = React.useState([]);
+    const [quizzes, setQuizzes]       = React.useState([]);
     const [mySubmissions, setMySubmissions] = React.useState({});
-    const [loading, setLoading] = React.useState(true);
+    const [myAttempts, setMyAttempts] = React.useState({});
+    const [announcements, setAnnouncements] = React.useState([]);
+    const [loading, setLoading]       = React.useState(true);
     const [selectedCourse, setSelectedCourse] = React.useState(null);
 
     React.useEffect(() => {
         if (user.role && user.role !== 'ADMIN') {
-            Promise.all([
+            const promises = [
                 apiClient.get("/api/lms/courses/"),
                 apiClient.get("/api/lms/assignments/"),
-                user.role === 'STUDENT' ? apiClient.get("/api/lms/assignment-submissions/") : Promise.resolve({ data: [] }),
-            ]).then(([crsRes, asgRes, subRes]) => {
-                setCourses(Array.isArray(crsRes.data) ? crsRes.data : (crsRes.data.results || []));
-                setAssignments(Array.isArray(asgRes.data) ? asgRes.data : (asgRes.data.results || []));
-                const subData = Array.isArray(subRes.data) ? subRes.data : (subRes.data.results || []);
-                const subMap = {};
-                subData.forEach(s => { subMap[s.assignment] = s; });
+                apiClient.get("/api/lms/quizzes/"),
+                apiClient.get("/api/lms/announcements/"),
+                isStudent ? apiClient.get("/api/lms/assignment-submissions/") : Promise.resolve({ data: [] }),
+                isStudent ? apiClient.get("/api/lms/quiz-attempts/") : Promise.resolve({ data: [] }),
+            ];
+            Promise.all(promises).then(([crsR, asgR, qzR, annR, subR, atR]) => {
+                setCourses(Array.isArray(crsR.data) ? crsR.data : (crsR.data.results || []));
+                setAssignments(Array.isArray(asgR.data) ? asgR.data : (asgR.data.results || []));
+                setQuizzes(Array.isArray(qzR.data) ? qzR.data : (qzR.data.results || []));
+                setAnnouncements(Array.isArray(annR.data) ? annR.data : (annR.data.results || []));
+                const subData = Array.isArray(subR.data) ? subR.data : (subR.data.results || []);
+                const atData  = Array.isArray(atR.data)  ? atR.data  : (atR.data.results  || []);
+                const subMap = {}; subData.forEach(s => { subMap[s.assignment] = s; });
+                const atMap  = {}; atData.forEach(a  => { atMap[a.quiz] = a; });
                 setMySubmissions(subMap);
+                setMyAttempts(atMap);
             }).catch(console.error).finally(() => setLoading(false));
-        } else {
-            setLoading(false);
-        }
+        } else { setLoading(false); }
     }, [user.role]);
 
     if (user.role === 'ADMIN') return <CreateCoursePage />;
-    if (loading) return (
-        <DashboardLayout user={user}>
-            <div style={{ padding: '80px', textAlign: 'center', color: '#94a3b8' }}>Loading...</div>
-        </DashboardLayout>
-    );
+    if (loading) return <DashboardLayout user={user}><div style={{ padding: '80px', textAlign: 'center', color: '#94a3b8' }}>Loading...</div></DashboardLayout>;
 
-    const courseAssignments = (courseId) =>
-        assignments
-            .filter(a => a.course === courseId)
-            .sort((a, b) => {
-                // open first
-                const isOpenA = !mySubmissions[a.id] && new Date() < new Date(a.due_date);
-                const isOpenB = !mySubmissions[b.id] && new Date() < new Date(b.due_date);
-                return isOpenB - isOpenA;
-            });
+    // ── Stream items for a course (sorted newest first) ──
+    const getCourseStream = (courseId) => {
+        const items = [];
+        assignments.filter(a => a.course === courseId).forEach(a => items.push({ ...a, _type: "assignment", _date: new Date(a.created_at) }));
+        quizzes.filter(q => q.course === courseId && q.is_published).forEach(q => items.push({ ...q, _type: "quiz", _date: new Date(q.created_at) }));
+        announcements.filter(a => a.course === courseId).forEach(a => items.push({ ...a, _type: "announcement", _date: new Date(a.created_at) }));
+        return items.sort((a, b) => b._date - a._date);
+    };
 
-    const coursePendingCount = (courseId) =>
-        courseAssignments(courseId).filter(a =>
-            !mySubmissions[a.id] && new Date() < new Date(a.due_date)
-        ).length;
+    const pendingAssignments = (courseId) =>
+        assignments.filter(a => a.course === courseId && !mySubmissions[a.id] && new Date() < new Date(a.due_date));
+
+    const upcomingQuizzes = (courseId) =>
+        quizzes.filter(q => q.course === courseId && q.is_active && !myAttempts[q.id]);
 
     return (
         <DashboardLayout user={user}>
-            <div style={{ padding: '32px 40px', fontFamily: "'Inter', sans-serif" }}>
-                <h1 style={{ fontSize: '2rem', fontWeight: 900, color: '#1e293b', margin: '0 0 6px' }}>
-                    {user.role === 'TEACHER' ? 'My Courses' : 'Enrolled Courses'}
-                </h1>
-                <p style={{ color: '#64748b', margin: '0 0 32px' }}>
-                    {courses.length} course{courses.length !== 1 ? 's' : ''} · click a course to view its stream
-                </p>
-
-                {courses.length === 0 ? (
-                    <div style={{ textAlign: 'center', padding: '100px', color: '#94a3b8' }}>
-                        <span className="material-icons-round" style={{ fontSize: '4rem' }}>import_contacts</span>
-                        <h3>No courses found.</h3>
-                        <p>You haven't been assigned or enrolled in any courses yet.</p>
-                    </div>
-                ) : (
-                    <div style={{ display: 'grid', gridTemplateColumns: selectedCourse ? '300px 1fr' : 'repeat(auto-fill, minmax(300px, 1fr))', gap: '24px', alignItems: 'start', transition: 'all 0.3s' }}>
-
-                        {/* Course Cards */}
-                        <div style={{ display: 'contents' }}>
-                            {!selectedCourse && courses.map(c => {
-                                const pending = coursePendingCount(c.id);
-                                return (
-                                    <div key={c.id}
-                                        onClick={() => setSelectedCourse(c)}
-                                        style={{
-                                            background: 'white', borderRadius: '20px', padding: '28px',
-                                            boxShadow: '0 4px 20px rgba(0,0,0,0.06)', cursor: 'pointer',
-                                            border: '2px solid transparent', transition: 'all 0.2s',
-                                            ':hover': { borderColor: '#2196F3' }
-                                        }}
-                                        className="hover-card">
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
-                                            <div style={{ background: 'rgba(33,150,243,0.1)', color: '#2196F3', padding: '10px', borderRadius: '14px' }}>
-                                                <span className="material-icons-round" style={{ fontSize: '28px' }}>school</span>
-                                            </div>
-                                            <div style={{ textAlign: 'right' }}>
-                                                <div style={{ fontSize: '0.78rem', fontWeight: 800, color: '#94a3b8', letterSpacing: '1px' }}>{c.code}</div>
-                                                {pending > 0 && (
-                                                    <div style={{ marginTop: 6, background: '#fef3c7', color: '#92400e', padding: '2px 10px', borderRadius: 20, fontSize: '0.72rem', fontWeight: 800 }}>
-                                                        {pending} Pending
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </div>
-                                        <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#1e293b', marginBottom: '8px' }}>{c.name}</h3>
-                                        <p style={{ fontSize: '0.85rem', color: '#64748b', lineHeight: '1.6', flex: 1 }}>
-                                            {c.description || "No description provided."}
-                                        </p>
-                                        <div style={{ marginTop: '20px', paddingTop: '16px', borderTop: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', color: '#64748b', fontWeight: 600 }}>
-                                            <span><span className="material-icons-round" style={{ fontSize: 15, verticalAlign: 'middle' }}>assignment</span> {courseAssignments(c.id).length} assignments</span>
-                                            <span>{c.duration_weeks} weeks</span>
-                                        </div>
-                                    </div>
-                                );
-                            })}
+            <div className="cs-page">
+                {!selectedCourse ? (
+                    /* ─── Course Grid ─── */
+                    <>
+                        <div className="cs-page-header">
+                            <h1 className="cs-page-title">{isStudent ? "Enrolled Courses" : "My Courses"}</h1>
+                            <p className="cs-page-sub">{courses.length} course{courses.length !== 1 ? "s" : ""}</p>
                         </div>
 
-                        {/* Course List (when one selected) */}
-                        {selectedCourse && (
-                            <>
-                                <div>
-                                    {courses.map(c => {
-                                        const pending = coursePendingCount(c.id);
-                                        return (
-                                            <div key={c.id}
-                                                onClick={() => setSelectedCourse(c)}
-                                                style={{
-                                                    background: 'white', borderRadius: '14px', padding: '14px 18px',
-                                                    marginBottom: '10px', cursor: 'pointer',
-                                                    border: `2px solid ${selectedCourse?.id === c.id ? '#2196F3' : 'transparent'}`,
-                                                    display: 'flex', justifyContent: 'space-between', alignItems: 'center'
-                                                }}>
-                                                <div>
-                                                    <div style={{ fontWeight: 700, color: '#1e293b', fontSize: '0.9rem' }}>{c.name}</div>
-                                                    <div style={{ color: '#94a3b8', fontSize: '0.75rem' }}>{c.code}</div>
-                                                </div>
-                                                {pending > 0 && (
-                                                    <span style={{ background: '#fef3c7', color: '#92400e', padding: '2px 8px', borderRadius: 20, fontSize: '0.72rem', fontWeight: 800 }}>
-                                                        {pending}
-                                                    </span>
-                                                )}
+                        {courses.length === 0 ? (
+                            <div className="cs-empty">
+                                <span className="material-icons-round">import_contacts</span>
+                                <p>No courses yet.</p>
+                            </div>
+                        ) : (
+                            <div className="cs-grid">
+                                {courses.map((c, i) => {
+                                    const pending  = pendingAssignments(c.id).length;
+                                    const liveQuiz = upcomingQuizzes(c.id).length;
+                                    return (
+                                        <div key={c.id} className="cs-course-card" onClick={() => setSelectedCourse(c)}>
+                                            {/* Banner */}
+                                            <div className="cs-banner" style={{ background: BANNER_COLORS[i % BANNER_COLORS.length] }}>
+                                                <div className="cs-banner-title">{c.name}</div>
+                                                <div className="cs-banner-sub">{c.code}{c.semester ? ` · ${c.semester}` : ""}</div>
+                                                <span className="material-icons-round cs-banner-icon">school</span>
                                             </div>
-                                        );
-                                    })}
-                                </div>
-
-                                {/* Stream Panel */}
-                                <div>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-                                        <div>
-                                            <h2 style={{ margin: 0, fontWeight: 900, color: '#1e293b' }}>{selectedCourse.name}</h2>
-                                            <span style={{ background: '#eff6ff', color: '#2196F3', padding: '2px 12px', borderRadius: 20, fontSize: '0.8rem', fontWeight: 700 }}>{selectedCourse.code}</span>
+                                            {/* Body */}
+                                            <div className="cs-card-body">
+                                                <p className="cs-card-desc">{c.description || "No description provided."}</p>
+                                                <div className="cs-card-footer">
+                                                    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                                                        {pending > 0 && <span className="cs-chip amber">{pending} pending</span>}
+                                                        {liveQuiz > 0 && <span className="cs-chip purple">{liveQuiz} quiz live</span>}
+                                                        <span className="cs-chip gray">{c.duration_weeks}w</span>
+                                                    </div>
+                                                    <span className="material-icons-round" style={{ color: '#94a3b8' }}>chevron_right</span>
+                                                </div>
+                                            </div>
                                         </div>
-                                        <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', display: 'flex', alignItems: 'center', gap: 4 }}
-                                            onClick={() => setSelectedCourse(null)}>
-                                            <span className="material-icons-round">close</span>
+                                    );
+                                })}
+                            </div>
+                        )}
+                    </>
+                ) : (
+                    /* ─── Course Stream (Google Classroom style) ─── */
+                    <div className="cs-stream-layout">
+                        {/* Sidebar: course list */}
+                        <div className="cs-sidebar">
+                            {courses.map((c, i) => (
+                                <div key={c.id}
+                                    className={`cs-sidebar-item ${selectedCourse?.id === c.id ? "active" : ""}`}
+                                    onClick={() => setSelectedCourse(c)}>
+                                    <div className="cs-sidebar-dot" style={{ background: BANNER_COLORS[i % BANNER_COLORS.length] }} />
+                                    <div>
+                                        <div className="cs-sidebar-name">{c.name}</div>
+                                        <div className="cs-sidebar-code">{c.code}</div>
+                                    </div>
+                                    {(() => { const p = pendingAssignments(c.id).length + upcomingQuizzes(c.id).length; return p > 0 ? <span className="cs-chip amber" style={{ marginLeft: 'auto' }}>{p}</span> : null; })()}
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* Main stream */}
+                        <div className="cs-main">
+                            {/* Course Hero Banner */}
+                            {(() => {
+                                const idx = courses.findIndex(c => c.id === selectedCourse.id);
+                                return (
+                                    <div className="cs-hero" style={{ background: BANNER_COLORS[idx % BANNER_COLORS.length] }}>
+                                        <div className="cs-hero-content">
+                                            <h2 className="cs-hero-title">{selectedCourse.name}</h2>
+                                            <p className="cs-hero-sub">{selectedCourse.code}{selectedCourse.semester ? ` · ${selectedCourse.semester}` : ""}</p>
+                                        </div>
+                                        <span className="material-icons-round cs-hero-icon">school</span>
+                                        <button className="cs-back-btn" onClick={() => setSelectedCourse(null)}>
+                                            <span className="material-icons-round">arrow_back</span>
+                                            All Courses
                                         </button>
                                     </div>
+                                );
+                            })()}
 
-                                    {/* Quick stats */}
-                                    <div style={{ display: 'flex', gap: 12, marginBottom: 24, flexWrap: 'wrap' }}>
-                                        <div style={{ background: 'white', borderRadius: 14, padding: '14px 20px', flex: 1, minWidth: 100, textAlign: 'center', boxShadow: '0 2px 10px rgba(0,0,0,0.05)' }}>
-                                            <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#2196F3' }}>{courseAssignments(selectedCourse.id).length}</div>
-                                            <div style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: 600 }}>Assignments</div>
+                            <div className="cs-stream-body">
+                                {/* Upcoming widget */}
+                                {isStudent && (
+                                    <div className="cs-upcoming-widget">
+                                        <div className="cs-widget-title">
+                                            <span className="material-icons-round">upcoming</span>
+                                            Upcoming
                                         </div>
-                                        <div style={{ background: 'white', borderRadius: 14, padding: '14px 20px', flex: 1, minWidth: 100, textAlign: 'center', boxShadow: '0 2px 10px rgba(0,0,0,0.05)' }}>
-                                            <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#f59e0b' }}>{coursePendingCount(selectedCourse.id)}</div>
-                                            <div style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: 600 }}>Pending</div>
-                                        </div>
-                                        <div style={{ background: 'white', borderRadius: 14, padding: '14px 20px', flex: 1, minWidth: 100, textAlign: 'center', boxShadow: '0 2px 10px rgba(0,0,0,0.05)' }}>
-                                            <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#22c55e' }}>{selectedCourse.duration_weeks}</div>
-                                            <div style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: 600 }}>Weeks</div>
-                                        </div>
+                                        {pendingAssignments(selectedCourse.id).length === 0 && upcomingQuizzes(selectedCourse.id).length === 0 ? (
+                                            <p style={{ color: '#94a3b8', fontSize: '0.82rem', margin: 0 }}>All caught up! 🎉</p>
+                                        ) : (
+                                            <>
+                                                {pendingAssignments(selectedCourse.id).map(a => (
+                                                    <div key={a.id} className="cs-upcoming-item" onClick={() => navigate('/assignments')}>
+                                                        <span className="material-icons-round" style={{ color: '#2196F3', fontSize: 16 }}>assignment</span>
+                                                        <div>
+                                                            <div style={{ fontWeight: 700, fontSize: '0.85rem' }}>{a.title}</div>
+                                                            <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Due {new Date(a.due_date).toLocaleDateString()}</div>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                                {upcomingQuizzes(selectedCourse.id).map(q => (
+                                                    <div key={q.id} className="cs-upcoming-item" onClick={() => navigate('/quizzes')}>
+                                                        <span className="material-icons-round" style={{ color: '#7c3aed', fontSize: 16 }}>quiz</span>
+                                                        <div>
+                                                            <div style={{ fontWeight: 700, fontSize: '0.85rem' }}>{q.title}</div>
+                                                            <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
+                                                                {q.end_time ? `Closes ${new Date(q.end_time).toLocaleDateString()}` : "Open"}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </>
+                                        )}
                                     </div>
+                                )}
 
-                                    {/* Assignment Stream */}
-                                    <h3 style={{ fontWeight: 800, color: '#1e293b', margin: '0 0 16px', fontSize: '1rem' }}>
-                                        📋 Assignment Stream
-                                    </h3>
-                                    {courseAssignments(selectedCourse.id).length === 0 && (
-                                        <div style={{ background: 'white', borderRadius: 14, padding: '40px', textAlign: 'center', color: '#94a3b8' }}>
-                                            No assignments for this course yet.
+                                {/* Stream feed */}
+                                <div className="cs-feed">
+                                    {getCourseStream(selectedCourse.id).length === 0 && (
+                                        <div className="cs-empty" style={{ padding: '60px 0' }}>
+                                            <span className="material-icons-round">dynamic_feed</span>
+                                            <p>No activity yet for this course.</p>
                                         </div>
                                     )}
-                                    {courseAssignments(selectedCourse.id).map(a => {
-                                        const sub = mySubmissions[a.id];
-                                        const past = new Date() > new Date(a.due_date);
-                                        const isOpen = !sub && !past;
-                                        const badgeColor = sub?.status === "GRADED" ? "#22c55e" : sub ? "#f59e0b" : past ? "#ef4444" : "#2196F3";
-                                        const badgeText = sub?.status === "GRADED" ? "Graded" : sub ? "Submitted" : past ? "Missing" : "Open";
 
-                                        return (
-                                            <div key={a.id} style={{
-                                                background: 'white', borderRadius: 16, padding: '20px 24px',
-                                                marginBottom: 14, boxShadow: '0 2px 12px rgba(0,0,0,0.05)',
-                                                borderLeft: `4px solid ${badgeColor}`
-                                            }}>
-                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
-                                                    <div style={{ fontWeight: 800, color: '#1e293b' }}>{a.title}</div>
-                                                    <span style={{ background: `${badgeColor}20`, color: badgeColor, padding: '3px 12px', borderRadius: 20, fontSize: '0.75rem', fontWeight: 800 }}>
-                                                        {badgeText}
-                                                    </span>
+                                    {getCourseStream(selectedCourse.id).map(item => {
+                                        if (item._type === "assignment") {
+                                            const sub = mySubmissions[item.id];
+                                            const past = new Date() > new Date(item.due_date);
+                                            const status = sub?.status === "GRADED" ? "graded" : sub ? "submitted" : past ? "missing" : "open";
+                                            const statusMap = {
+                                                open:      { color: "#2196F3", label: "Open",      icon: "assignment" },
+                                                submitted: { color: "#f59e0b", label: "Submitted", icon: "check_circle" },
+                                                graded:    { color: "#22c55e", label: "Graded",    icon: "grade" },
+                                                missing:   { color: "#ef4444", label: "Missing",   icon: "error" },
+                                            };
+                                            const s = statusMap[status];
+                                            return (
+                                                <div key={`a-${item.id}`} className="cs-stream-card" style={{ borderLeft: `4px solid ${s.color}` }}>
+                                                    <div className="cs-stream-card-header">
+                                                        <div className="cs-stream-type-icon" style={{ background: `${s.color}20`, color: s.color }}>
+                                                            <span className="material-icons-round">{s.icon}</span>
+                                                        </div>
+                                                        <div style={{ flex: 1 }}>
+                                                            <div className="cs-stream-eyebrow">Assignment</div>
+                                                            <div className="cs-stream-card-title">{item.title}</div>
+                                                        </div>
+                                                        <span style={{ background: `${s.color}20`, color: s.color, padding: '3px 12px', borderRadius: 20, fontSize: '0.75rem', fontWeight: 800 }}>{s.label}</span>
+                                                    </div>
+                                                    <p className="cs-stream-desc">{item.description}</p>
+                                                    <div className="cs-stream-meta">
+                                                        <span><span className="material-icons-round" style={{ fontSize: 14 }}>schedule</span> Due {new Date(item.due_date).toLocaleString()}</span>
+                                                        <span>{item.total_marks} marks</span>
+                                                    </div>
+                                                    <div className="cs-stream-actions">
+                                                        {(item.attachment_url || item.attachment) && (
+                                                            <button className="cs-action-btn file" onClick={() => openFile(item.attachment_url || item.attachment)}>
+                                                                <span className="material-icons-round">open_in_new</span> Open File
+                                                            </button>
+                                                        )}
+                                                        {item.links?.map((lk, i) => (
+                                                            <a key={i} href={lk.url} target="_blank" rel="noreferrer" className="cs-action-btn link">
+                                                                <span className="material-icons-round">link</span> {lk.label}
+                                                            </a>
+                                                        ))}
+                                                        {status === "open" && isStudent && (
+                                                            <button className="cs-action-btn submit" onClick={() => navigate('/assignments')}>
+                                                                <span className="material-icons-round">upload_file</span> Submit
+                                                            </button>
+                                                        )}
+                                                        {status === "graded" && sub && (
+                                                            <span className="cs-action-btn grade">
+                                                                Score: {sub.score}/{item.total_marks}
+                                                            </span>
+                                                        )}
+                                                    </div>
                                                 </div>
-                                                <div style={{ fontSize: '0.82rem', color: '#64748b', marginBottom: 10 }}>
-                                                    Due: {new Date(a.due_date).toLocaleString()} · {a.total_marks} marks
-                                                </div>
-                                                {a.description && (
-                                                    <p style={{ fontSize: '0.85rem', color: '#475569', margin: '0 0 12px', lineHeight: 1.5 }}>{a.description}</p>
-                                                )}
+                                            );
+                                        }
 
-                                                {/* Links and attachments */}
-                                                <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
-                                                    {(a.attachment_url || a.attachment) && (
-                                                        <button onClick={() => openFile(a.attachment_url || a.attachment)}
-                                                            style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px', background: '#f0f9ff', color: '#0284c7', border: 'none', borderRadius: 10, cursor: 'pointer', fontSize: '0.82rem', fontWeight: 700 }}>
-                                                            <span className="material-icons-round" style={{ fontSize: 16 }}>open_in_new</span>
-                                                            Open File
-                                                        </button>
+                                        if (item._type === "quiz") {
+                                            const attempt = myAttempts[item.id];
+                                            const quizState = attempt ? "done" : item.is_active ? "live" : "closed";
+                                            const qMap = {
+                                                live:   { color: "#7c3aed", label: "Live Now",  icon: "bolt" },
+                                                done:   { color: "#22c55e", label: "Completed", icon: "check_circle" },
+                                                closed: { color: "#94a3b8", label: "Closed",    icon: "lock" },
+                                            };
+                                            const s = qMap[quizState];
+                                            return (
+                                                <div key={`q-${item.id}`} className="cs-stream-card" style={{ borderLeft: `4px solid ${s.color}` }}>
+                                                    <div className="cs-stream-card-header">
+                                                        <div className="cs-stream-type-icon" style={{ background: `${s.color}20`, color: s.color }}>
+                                                            <span className="material-icons-round">{s.icon}</span>
+                                                        </div>
+                                                        <div style={{ flex: 1 }}>
+                                                            <div className="cs-stream-eyebrow">Quiz</div>
+                                                            <div className="cs-stream-card-title">{item.title}</div>
+                                                        </div>
+                                                        <span style={{ background: `${s.color}20`, color: s.color, padding: '3px 12px', borderRadius: 20, fontSize: '0.75rem', fontWeight: 800 }}>{s.label}</span>
+                                                    </div>
+                                                    {item.instructions && <p className="cs-stream-desc">{item.instructions}</p>}
+                                                    <div className="cs-stream-meta">
+                                                        <span><span className="material-icons-round" style={{ fontSize: 14 }}>timer</span> {item.total_time_minutes} min</span>
+                                                        <span>{item.question_count} questions</span>
+                                                        {item.end_time && <span>Closes: {new Date(item.end_time).toLocaleString()}</span>}
+                                                    </div>
+                                                    {attempt && (
+                                                        <div style={{ marginTop: 10, display: 'flex', alignItems: 'center', gap: 10 }}>
+                                                            <div style={{ fontWeight: 900, color: '#7c3aed' }}>{attempt.score}/{attempt.total_marks}</div>
+                                                            <div style={{ flex: 1, height: 6, background: '#f1f5f9', borderRadius: 3 }}>
+                                                                <div style={{ height: '100%', background: 'linear-gradient(90deg,#7c3aed,#2196F3)', borderRadius: 3, width: `${attempt.percentage || 0}%` }} />
+                                                            </div>
+                                                            <span style={{ fontWeight: 700, color: '#7c3aed', fontSize: '0.85rem' }}>{attempt.percentage}%</span>
+                                                        </div>
                                                     )}
-                                                    {a.links?.map((lk, i) => (
-                                                        <a key={i} href={lk.url} target="_blank" rel="noreferrer"
-                                                            style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '7px 14px', background: '#f5f3ff', color: '#7c3aed', borderRadius: 10, textDecoration: 'none', fontSize: '0.82rem', fontWeight: 700 }}>
-                                                            <span className="material-icons-round" style={{ fontSize: 14 }}>link</span>
-                                                            {lk.label}
-                                                        </a>
-                                                    ))}
-                                                    {isOpen && (
-                                                        <button onClick={() => navigate('/assignments')}
-                                                            style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px', background: 'linear-gradient(135deg, #2196F3, #1565C0)', color: 'white', border: 'none', borderRadius: 10, cursor: 'pointer', fontSize: '0.82rem', fontWeight: 700 }}>
-                                                            <span className="material-icons-round" style={{ fontSize: 16 }}>upload_file</span>
-                                                            Submit
-                                                        </button>
-                                                    )}
-                                                    {sub?.status === "GRADED" && (
-                                                        <span style={{ background: '#d1fae5', color: '#065f46', padding: '7px 14px', borderRadius: 10, fontWeight: 800, fontSize: '0.82rem' }}>
-                                                            Score: {sub.score}/{a.total_marks}
-                                                        </span>
-                                                    )}
+                                                    <div className="cs-stream-actions" style={{ marginTop: 10 }}>
+                                                        {quizState === "live" && isStudent && (
+                                                            <button className="cs-action-btn submit" onClick={() => navigate('/quizzes')}>
+                                                                <span className="material-icons-round">play_circle</span> Take Quiz
+                                                            </button>
+                                                        )}
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        );
+                                            );
+                                        }
+
+                                        if (item._type === "announcement") {
+                                            return (
+                                                <div key={`ann-${item.id}`} className="cs-stream-card" style={{ borderLeft: '4px solid #64748b' }}>
+                                                    <div className="cs-stream-card-header">
+                                                        <div className="cs-stream-type-icon" style={{ background: '#f1f5f9', color: '#64748b' }}>
+                                                            <span className="material-icons-round">campaign</span>
+                                                        </div>
+                                                        <div style={{ flex: 1 }}>
+                                                            <div className="cs-stream-eyebrow">Announcement · {item.author_name}</div>
+                                                            <div className="cs-stream-card-title">{item.title}</div>
+                                                        </div>
+                                                        <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>{new Date(item.created_at).toLocaleDateString()}</span>
+                                                    </div>
+                                                    <p className="cs-stream-desc">{item.content}</p>
+                                                </div>
+                                            );
+                                        }
+                                        return null;
                                     })}
-
-                                    <button className="asgn-btn primary"
-                                        style={{ marginTop: 16 }}
-                                        onClick={() => navigate('/assignments')}>
-                                        Go to Full Assignments Page →
-                                    </button>
                                 </div>
-                            </>
-                        )}
+                            </div>
+                        </div>
                     </div>
                 )}
             </div>
