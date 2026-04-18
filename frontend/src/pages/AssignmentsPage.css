@@ -375,6 +375,74 @@
     font-size: 1.1rem; font-weight: 900; color: #16a34a;
 }
 
+/* Link Chips & Row */
+.asgn-link-row {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.asgn-links-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 14px;
+}
+
+.asgn-link-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    background: #f5f3ff;
+    color: #7c3aed;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+}
+
+.asgn-link-chip button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #ef4444;
+    display: flex;
+    align-items: center;
+    padding: 0;
+    margin-left: 4px;
+}
+
+.asgn-link-chip button .material-icons-round { font-size: 14px; }
+
+/* Sub result panel */
+.asgn-sub-result {
+    margin-bottom: 14px;
+    padding: 14px;
+    background: #f8fafc;
+    border-radius: 12px;
+}
+
+/* Submit section */
+.asgn-submit-section {
+    padding: 16px;
+    background: #f8fafc;
+    border-radius: 14px;
+    border: 2px dashed #e2e8f0;
+}
+
+/* Sub panel header */
+.asgn-sub-panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 18px;
+}
+
 /* Notification bell */
 .notif-wrapper { position: relative; }
 .notif-count {
