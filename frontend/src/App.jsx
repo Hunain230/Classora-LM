@@ -10,6 +10,7 @@ import CoursesPage from "./pages/CoursesPage";
 import TeacherAssignmentsPage from "./pages/TeacherAssignmentsPage";
 import StudentAssignmentsPage from "./pages/StudentAssignmentsPage";
 import TeacherQuizzesPage from "./pages/TeacherQuizzesPage";
+import StudentQuizzesPage from "./pages/StudentQuizzesPage";
 import TeacherAttendancePage from "./pages/TeacherAttendancePage";
 import TeacherLecturePage from "./pages/TeacherLecturePage";
 import AnalyticsPage from "./pages/AnalyticsPage";
@@ -47,6 +48,15 @@ function AssignmentsRoute() {
   try { user = JSON.parse(stored); } catch { return <Navigate to="/login" replace />; }
   if (user.role === "STUDENT") return <StudentAssignmentsPage />;
   return <TeacherAssignmentsPage />;
+}
+
+function QuizzesRoute() {
+  const stored = window.localStorage.getItem("current_user");
+  if (!stored) return <Navigate to="/login" replace />;
+  let user;
+  try { user = JSON.parse(stored); } catch { return <Navigate to="/login" replace />; }
+  if (user.role === "STUDENT") return <StudentQuizzesPage />;
+  return <TeacherQuizzesPage />;
 }
 
 function App() {
@@ -95,7 +105,7 @@ function App() {
         } />
 
         <Route path="/assignments" element={<AssignmentsRoute />} />
-        <Route path="/quizzes" element={<TeacherQuizzesPage />} />
+        <Route path="/quizzes" element={<QuizzesRoute />} />
         <Route path="/attendance" element={<TeacherAttendancePage />} />
         <Route path="/lectures" element={<TeacherLecturePage />} />
         <Route path="/analytics" element={<AnalyticsPage />} />
