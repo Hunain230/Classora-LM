@@ -94,3 +94,27 @@ class Announcement(models.Model):
     content = models.TextField()
     author = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
+
+class AssignmentSubmission(models.Model):
+    class Status(models.TextChoices):
+        ON_TIME = "ON_TIME", "On Time"
+        LATE = "LATE", "Late"
+        GRADED = "GRADED", "Graded"
+
+    assignment = models.ForeignKey(Assignment, on_delete=models.CASCADE, related_name="submissions")
+    student = models.ForeignKey(CustomUser, on_delete=models.CASCADE, limit_choices_to={'role': 'STUDENT'})
+    submitted_at = models.DateTimeField(auto_now_add=True)
+    attachment = models.FileField(upload_to="assignment_submissions/", null=True, blank=True)
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.ON_TIME)
+    score = models.IntegerField(null=True, blank=True)
+    feedback = models.TextField(null=True, blank=True)
+
+    class Meta:
+        unique_together = ('assignment', 'student')
+
+class Notification(models.Model):
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name="notifications")
+    title = models.CharField(max_length=255)
+    message = models.TextField()
+    is_read = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
