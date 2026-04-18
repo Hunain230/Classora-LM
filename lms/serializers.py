@@ -25,9 +25,19 @@ class LectureSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 class AssignmentSerializer(serializers.ModelSerializer):
+    attachment_url = serializers.SerializerMethodField()
+
     class Meta:
         model = Assignment
         fields = "__all__"
+
+    def get_attachment_url(self, obj):
+        if obj.attachment:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.attachment.url)
+            return f"/media/{obj.attachment}"
+        return None
 
 class QuizSerializer(serializers.ModelSerializer):
     class Meta:
@@ -59,10 +69,20 @@ class AnnouncementSerializer(serializers.ModelSerializer):
 
 class AssignmentSubmissionSerializer(serializers.ModelSerializer):
     student_name = serializers.ReadOnlyField(source="student.full_name")
+    attachment_url = serializers.SerializerMethodField()
+
     class Meta:
         model = AssignmentSubmission
         fields = "__all__"
         read_only_fields = ['student', 'submitted_at', 'status']
+
+    def get_attachment_url(self, obj):
+        if obj.attachment:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.attachment.url)
+            return f"/media/{obj.attachment}"
+        return None
 
 class NotificationSerializer(serializers.ModelSerializer):
     class Meta:
