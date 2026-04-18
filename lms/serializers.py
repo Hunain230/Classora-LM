@@ -2,7 +2,7 @@ from rest_framework import serializers
 from .models import (
     Course, Lecture, Assignment, Quiz, Question, 
     AttendanceRecord, AttendanceEntry, Announcement, Department,
-    AssignmentSubmission, Notification
+    AssignmentSubmission, Notification, QuizAttempt
 )
 from accounts.serializers import UserSerializer
 
@@ -40,9 +40,15 @@ class AssignmentSerializer(serializers.ModelSerializer):
         return None
 
 class QuizSerializer(serializers.ModelSerializer):
+    question_count = serializers.IntegerField(source='questions.count', read_only=True)
+    is_active = serializers.SerializerMethodField()
+
     class Meta:
         model = Quiz
         fields = "__all__"
+
+    def get_is_active(self, obj):
+        return obj.is_active()
 
 class QuestionSerializer(serializers.ModelSerializer):
     class Meta:
@@ -89,3 +95,17 @@ class NotificationSerializer(serializers.ModelSerializer):
         model = Notification
         fields = "__all__"
         read_only_fields = ['user', 'created_at']
+
+class QuizAttemptSerializer(serializers.ModelSerializer):
+    student_name = serializers.ReadOnlyField(source="student.full_name")
+    percentage = serializers.SerializerMethodField()
+
+    class Meta:
+        model = QuizAttempt
+        fields = "__all__"
+        read_only_fields = ['student', 'submitted_at', 'score', 'total_marks']
+
+    def get_percentage(self, obj):
+        if obj.total_marks and obj.total_marks > 0:
+            return round((obj.score / obj.total_marks) * 100, 1)
+        return None
