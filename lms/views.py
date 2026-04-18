@@ -4,13 +4,13 @@ from rest_framework.response import Response
 from .models import (
     Course, Lecture, Assignment, Quiz, Question,
     AttendanceRecord, AttendanceEntry, Announcement, Department,
-    AssignmentSubmission, Notification
+    AssignmentSubmission, Notification, QuizAttempt
 )
 from .serializers import (
     CourseSerializer, LectureSerializer, AssignmentSerializer, QuizSerializer,
     QuestionSerializer, AttendanceRecordSerializer, AttendanceEntrySerializer,
     AnnouncementSerializer, DepartmentSerializer, AssignmentSubmissionSerializer,
-    NotificationSerializer
+    NotificationSerializer, QuizAttemptSerializer
 )
 
 class DepartmentViewSet(viewsets.ModelViewSet):
@@ -102,6 +102,27 @@ class QuizViewSet(viewsets.ModelViewSet):
         elif user.role == "STUDENT":
             return self.queryset.filter(course__students=user, is_published=True)
         return self.queryset.none()
+
+    def perform_create(self, serializer):
+        quiz = serializer.save()
+        if quiz.is_published:
+            self._notify_students(quiz)
+
+    def perform_update(self, serializer):
+        old_published = serializer.instance.is_published
+        quiz = serializer.save()
+        if quiz.is_published and not old_published:
+            self._notify_students(quiz)
+
+    def _notify_students(self, quiz):
+        students = quiz.course.students.all()
+        Notification.objects.bulk_create([
+            Notification(
+                user=s,
+                title="New Quiz Available",
+                message=f"Quiz '{quiz.title}' is now available for {quiz.course.name}."
+            ) for s in students
+        ])
 
 class QuestionViewSet(viewsets.ModelViewSet):
     queryset = Question.objects.all()
@@ -199,3 +220,66 @@ class NotificationViewSet(viewsets.ModelViewSet):
     def mark_all_read(self, request):
         self.get_queryset().update(is_read=True)
         return Response({'status': 'all marked read'})
+
+class QuizAttemptViewSet(viewsets.ModelViewSet):
+    queryset = QuizAttempt.objects.all()
+    serializer_class = QuizAttemptSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.role == "TEACHER":
+            return self.queryset.filter(quiz__course__teachers=user)
+        elif user.role == "STUDENT":
+            return self.queryset.filter(student=user)
+        elif user.role == "ADMIN":
+            return self.queryset.filter(quiz__course__institute=user.institute)
+        return self.queryset.none()
+
+    def perform_create(self, serializer):
+        from django.utils import timezone
+        quiz = serializer.validated_data.get('quiz')
+        answers = serializer.validated_data.get('answers', {})
+        time_taken = serializer.validated_data.get('time_taken_seconds')
+
+        questions = quiz.questions.all()
+        total_marks = sum(q.points for q in questions)
+        score = 0
+
+        for q in questions:
+            student_answer = answers.get(str(q.id))
+            if q.question_type == "MCQ":
+                if student_answer is not None and str(student_answer) == str(q.correct_answer):
+                    score += q.points
+            # SHORT_ANSWER: teacher marks manually
+
+        attempt = serializer.save(
+            student=self.request.user,
+            score=score,
+            total_marks=total_marks,
+            time_taken_seconds=time_taken
+        )
+
+        # Notify student of their score
+        percentage = round((score / total_marks) * 100, 1) if total_marks > 0 else 0
+        Notification.objects.create(
+            user=self.request.user,
+            title="Quiz Submitted",
+            message=f"You scored {score}/{total_marks} ({percentage}%) on '{quiz.title}'.",
+        )
+
+    @action(detail=True, methods=['patch'])
+    def grade(self, request, pk=None):
+        """Teacher manually grades a short-answer attempt."""
+        attempt = self.get_object()
+        score = request.data.get('score')
+        if score is not None:
+            attempt.score = float(score)
+            attempt.save()
+            Notification.objects.create(
+                user=attempt.student,
+                title="Quiz Graded",
+                message=f"Your quiz '{attempt.quiz.title}' has been graded. Score: {score}/{attempt.total_marks}.",
+            )
+        return Response(QuizAttemptSerializer(attempt).data)
+
