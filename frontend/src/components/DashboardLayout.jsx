@@ -1,13 +1,41 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import { logout } from "../api/auth";
 import { Logo } from "../components/Logo";
+import { apiClient } from "../api/client";
 import "./DashboardLayout.css";
+import "../pages/AssignmentsPage.css";
 
 export default function DashboardLayout({ children, user }) {
     const navigate = useNavigate();
     const location = useLocation();
     const [showDropdown, setShowDropdown] = useState(false);
+    const [notifications, setNotifications] = useState([]);
+    const [showNotif, setShowNotif] = useState(false);
+    const notifRef = useRef(null);
+
+    useEffect(() => {
+        fetchNotifications();
+        const interval = setInterval(fetchNotifications, 30000);
+        return () => clearInterval(interval);
+    }, []);
+
+    const fetchNotifications = () => {
+        apiClient.get("/api/lms/notifications/")
+            .then(res => {
+                const data = Array.isArray(res.data) ? res.data : (res.data.results || []);
+                setNotifications(data);
+            })
+            .catch(() => {});
+    };
+
+    const markAllRead = () => {
+        apiClient.post("/api/lms/notifications/mark_all_read/")
+            .then(() => fetchNotifications())
+            .catch(() => {});
+    };
+
+    const unreadCount = notifications.filter(n => !n.is_read).length;
 
     const menuItems = [
         { label: "Dashboard", path: "/dashboard", icon: "grid_view", roles: ["ADMIN", "TEACHER", "STUDENT"] },
@@ -91,10 +119,30 @@ export default function DashboardLayout({ children, user }) {
                                 </div>
                             )}
                         </div>
-                        <button className="topbar-icon-btn">
-                            <span className="material-icons-round">notifications</span>
-                            <span className="notification-dot"></span>
-                        </button>
+                        <div className="notif-wrapper" ref={notifRef}>
+                            <button className="topbar-icon-btn" onClick={() => setShowNotif(p => !p)}>
+                                <span className="material-icons-round">notifications</span>
+                                {unreadCount > 0 && <span className="notif-count">{unreadCount > 9 ? '9+' : unreadCount}</span>}
+                            </button>
+                            {showNotif && (
+                                <div className="notif-dropdown">
+                                    <div className="notif-dropdown-header">
+                                        <h4>Notifications</h4>
+                                        {unreadCount > 0 && <button className="notif-mark-btn" onClick={markAllRead}>Mark all read</button>}
+                                    </div>
+                                    <div className="notif-list">
+                                        {notifications.length === 0 && <div className="notif-empty">No notifications</div>}
+                                        {notifications.map(n => (
+                                            <div key={n.id} className={`notif-item ${!n.is_read ? 'unread' : ''}`}>
+                                                <div className="notif-item-title">{n.title}</div>
+                                                <div className="notif-item-msg">{n.message}</div>
+                                                <div className="notif-item-time">{new Date(n.created_at).toLocaleString()}</div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </header>
 
