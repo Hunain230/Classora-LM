@@ -82,6 +82,26 @@ export default function AnnouncementsPage() {
         }
     };
 
+    const deleteAnnouncement = async (id) => {
+        if (!window.confirm("Are you sure you want to delete this announcement?")) return;
+        try {
+            await apiClient.delete(`/api/lms/announcements/${id}/`);
+            fetchData();
+        } catch(err) {
+            alert("Failed to delete announcement.");
+        }
+    };
+
+    const deleteComment = async (id) => {
+        if (!window.confirm("Delete your comment?")) return;
+        try {
+            await apiClient.delete(`/api/lms/announcement-comments/${id}/`);
+            fetchData();
+        } catch(err) {
+            alert("Failed to delete comment.");
+        }
+    };
+
     return (
         <DashboardLayout user={user}>
             <div className="ann-page-container">
@@ -166,7 +186,7 @@ export default function AnnouncementsPage() {
                                         <div className="ann-avatar">
                                             <span className="material-icons-round">person</span>
                                         </div>
-                                        <div>
+                                        <div style={{ flex: 1 }}>
                                             <div className="ann-author">{ann.author_name}</div>
                                             <div className="ann-meta">
                                                 {d.toLocaleDateString()} at {d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -181,6 +201,16 @@ export default function AnnouncementsPage() {
                                         ) : (
                                             <span className="ann-chip gray">Global</span>
                                         )}
+                                        {/* Actions */}
+                                        {(user.role === 'ADMIN' || user.id === ann.author) && (
+                                            <button 
+                                                style={{ marginLeft: 10, background: 'none', border: 'none', color: '#f43f5e', cursor: 'pointer', padding: 4 }}
+                                                onClick={() => deleteAnnouncement(ann.id)}
+                                                title="Delete Announcement"
+                                            >
+                                                <span className="material-icons-round" style={{ fontSize: 20 }}>delete</span>
+                                            </button>
+                                        )}
                                     </div>
                                     <div className="ann-card-title">{ann.title}</div>
                                     <div className="ann-card-content">{ann.content}</div>
@@ -194,8 +224,18 @@ export default function AnnouncementsPage() {
                                                         <span className="material-icons-round" style={{ fontSize: 14 }}>person</span>
                                                     </div>
                                                     <div className="ann-comment-body">
-                                                        <div className="ann-comment-author">
-                                                            {cmt.user_name} <span style={{ fontWeight: 400, color: '#94a3b8' }}>· {cmt.user_role}</span>
+                                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                                                            <div className="ann-comment-author">
+                                                                {cmt.user_name} <span style={{ fontWeight: 400, color: '#94a3b8' }}>· {cmt.user_role}</span>
+                                                            </div>
+                                                            {(user.role === 'ADMIN' || user.id === cmt.user) && (
+                                                                <button
+                                                                    style={{ background: 'none', border: 'none', color: '#f43f5e', cursor: 'pointer', padding: 0 }}
+                                                                    onClick={() => deleteComment(cmt.id)}
+                                                                >
+                                                                    <span className="material-icons-round" style={{ fontSize: 14 }}>delete</span>
+                                                                </button>
+                                                            )}
                                                         </div>
                                                         <div className="ann-comment-text">{cmt.content}</div>
                                                     </div>
