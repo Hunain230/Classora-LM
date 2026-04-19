@@ -10,6 +10,7 @@ from .views import (
     student_dashboard,
     teacher_dashboard,
     users_list,
+    delete_user,
 )
 
 urlpatterns = [
@@ -27,6 +28,7 @@ urlpatterns = [
     path("institute/<int:pk>/", institute_detail, name="institute-detail"),
     path("users/", users_list, name="user-list"),
     path("users/create/", create_user, name="user-create"),
+    path("users/<int:pk>/delete/", delete_user, name="user-delete"),
     path("teacher/dashboard/", teacher_dashboard, name="teacher-dashboard"),
     path("student/dashboard/", student_dashboard, name="student-dashboard"),
 ]
