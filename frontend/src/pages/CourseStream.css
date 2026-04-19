@@ -269,6 +269,15 @@
 .cs-action-btn.submit:hover { transform: translateY(-2px) scale(1.02); box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4); }
 .cs-action-btn.grade  { background: #f0fdf4; color: #16a34a; cursor: default; }
 
+.cs-stream-image-wrap {
+    margin: 16px 0; border-radius: 16px; overflow: hidden;
+    border: 1px solid #f1f5f9; box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+    cursor: zoom-in; transition: transform 0.3s ease;
+}
+.cs-stream-image-wrap:hover { transform: scale(1.005); }
+.cs-stream-image-wrap img { display: block; width: 100%; transition: opacity 0.2s; }
+.cs-stream-image-wrap img:hover { opacity: 0.95; }
+
 /* Responsive */
 @media (max-width: 1024px) {
     .cs-stream-layout { grid-template-columns: 1fr; }
