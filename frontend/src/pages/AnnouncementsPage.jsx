@@ -17,6 +17,7 @@ export default function AnnouncementsPage() {
         course: "",
         department: ""
     });
+    const [selectedImage, setSelectedImage] = useState(null);
     const [submitting, setSubmitting] = useState(false);
     const [commentTexts, setCommentTexts] = useState({}); // { announcementId: text }
 
@@ -45,20 +46,30 @@ export default function AnnouncementsPage() {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
+    const handleImageChange = (e) => {
+        if (e.target.files && e.target.files[0]) {
+            setSelectedImage(e.target.files[0]);
+        }
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setSubmitting(true);
         try {
-            const payload = {
-                title: formData.title,
-                content: formData.content,
-                target_role: formData.target_role,
-            };
-            if (formData.course) payload.course = formData.course;
-            if (formData.department && user.role === "ADMIN") payload.department = formData.department;
+            const data = new FormData();
+            data.append("title", formData.title);
+            data.append("content", formData.content);
+            data.append("target_role", formData.target_role);
+            if (formData.course) data.append("course", formData.course);
+            if (formData.department && user.role === "ADMIN") data.append("department", formData.department);
+            if (selectedImage) data.append("image", selectedImage);
 
-            await apiClient.post("/api/lms/announcements/", payload);
+            await apiClient.post("/api/lms/announcements/", data, {
+                headers: { "Content-Type": "multipart/form-data" }
+            });
+            
             setFormData({ title: "", content: "", target_role: "ALL", course: "", department: "" });
+            setSelectedImage(null);
             fetchData();
         } catch (err) {
             alert("Failed to post announcement. " + JSON.stringify(err.response?.data || ""));
@@ -119,20 +130,20 @@ export default function AnnouncementsPage() {
                             </h3>
                             <form onSubmit={handleSubmit} className="ann-form">
                                 <div className="ann-form-group">
-                                    <label>Title</label>
-                                    <input type="text" name="title" className="ann-input" value={formData.title} onChange={handleInputChange} required placeholder="e.g., Campus closed on Friday" />
+                                    <label>What's the title?</label>
+                                    <input type="text" name="title" className="ann-input" value={formData.title} onChange={handleInputChange} required placeholder="e.g., Important Update..." />
+                                </div>
+
+                                <div className="ann-form-group">
+                                    <label>Target Audience</label>
+                                    <select name="target_role" className="ann-input" value={formData.target_role} onChange={handleInputChange}>
+                                        <option value="ALL">Everyone</option>
+                                        <option value="STUDENT">Students Only</option>
+                                        <option value="TEACHER">Teachers Only</option>
+                                    </select>
                                 </div>
 
                                 <div className="ann-form-row">
-                                    <div className="ann-form-group">
-                                        <label>Target Audience</label>
-                                        <select name="target_role" className="ann-input" value={formData.target_role} onChange={handleInputChange}>
-                                            <option value="ALL">Everyone</option>
-                                            <option value="STUDENT">Students Only</option>
-                                            <option value="TEACHER">Teachers Only</option>
-                                        </select>
-                                    </div>
-
                                     {user.role === "ADMIN" && (
                                         <div className="ann-form-group">
                                             <label>Specific Department</label>
@@ -142,26 +153,36 @@ export default function AnnouncementsPage() {
                                             </select>
                                         </div>
                                     )}
+                                    <div className="ann-form-group">
+                                        <label>Specific Class</label>
+                                        <select name="course" className="ann-input" value={formData.course} onChange={handleInputChange}>
+                                            <option value="">-- Across {(user.role === "TEACHER" ? "My Classes" : "All Classes")} --</option>
+                                            {courses
+                                                .filter(c => !formData.department || c.department === parseInt(formData.department))
+                                                .map(c => <option key={c.id} value={c.id}>{c.code}: {c.name}</option>)
+                                            }
+                                        </select>
+                                    </div>
                                 </div>
 
                                 <div className="ann-form-group">
-                                    <label>Specific Class {formData.department ? "(Filter by dept)" : ""}</label>
-                                    <select name="course" className="ann-input" value={formData.course} onChange={handleInputChange}>
-                                        <option value="">-- Across {(user.role === "TEACHER" ? "My Classes" : "All Classes")} --</option>
-                                        {courses
-                                            .filter(c => !formData.department || c.department === parseInt(formData.department))
-                                            .map(c => <option key={c.id} value={c.id}>{c.code}: {c.name}</option>)
-                                        }
-                                    </select>
-                                </div>
-
-                                <div className="ann-form-group" style={{ flex: 1 }}>
-                                    <label>Message</label>
+                                    <label>Announcement Message</label>
                                     <textarea name="content" className="ann-input ann-textarea" value={formData.content} onChange={handleInputChange} required placeholder="Type the announcement details here..."></textarea>
                                 </div>
 
+                                <div className="ann-form-group">
+                                    <label>Attach a Picture (Optional)</label>
+                                    <div style={{ position: 'relative' }}>
+                                        <input type="file" accept="image/*" onChange={handleImageChange} style={{ opacity: 0, position: 'absolute', inset: 0, cursor: 'pointer' }} />
+                                        <div className="ann-input" style={{ display: 'flex', alignItems: 'center', gap: '10px', color: selectedImage ? '#7c3aed' : '#94a3b8' }}>
+                                            <span className="material-icons-round">image</span>
+                                            {selectedImage ? selectedImage.name : "Choose an image..."}
+                                        </div>
+                                    </div>
+                                </div>
+
                                 <button type="submit" className="ann-submit-btn" disabled={submitting}>
-                                    {submitting ? "Posting..." : "Post Announcement"}
+                                    {submitting ? "Publishing..." : "Post Announcement"}
                                     <span className="material-icons-round">send</span>
                                 </button>
                             </form>
@@ -170,50 +191,71 @@ export default function AnnouncementsPage() {
 
                     {/* RIGHT PANEL: Feed */}
                     <div className="ann-feed">
-                        {loading && <p style={{ color: '#94a3b8' }}>Loading announcements...</p>}
+                        {loading && <div className="ann-empty"><p>Loading announcements...</p></div>}
                         {!loading && announcements.length === 0 && (
                             <div className="ann-empty">
-                                <span className="material-icons-round">notifications_none</span>
-                                <p>No announcements right now.</p>
+                                <span className="material-icons-round">notifications_paused</span>
+                                <p>Nothing here yet. Stay tuned!</p>
                             </div>
                         )}
 
                         {!loading && announcements.map(ann => {
                             const d = new Date(ann.created_at);
+                            const imgUrl = ann.image_url || (ann.image ? `http://localhost:8000${ann.image}` : null);
+                            
                             return (
                                 <div key={ann.id} className="ann-card">
                                     <div className="ann-card-header">
                                         <div className="ann-avatar">
                                             <span className="material-icons-round">person</span>
                                         </div>
-                                        <div style={{ flex: 1 }}>
+                                        <div className="ann-card-header-main">
                                             <div className="ann-author">{ann.author_name}</div>
                                             <div className="ann-meta">
                                                 {d.toLocaleDateString()} at {d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                                {ann.target_role !== "ALL" && ` · To ${ann.target_role}s`}
+                                            </div>
+                                            <div className="ann-chips-row">
+                                                {ann.author_role === "ADMIN" ? (
+                                                    <span className="ann-chip admin">Admin</span>
+                                                ) : (
+                                                    <span className="ann-chip teacher">Teacher</span>
+                                                )}
+                                                {ann.course ? (
+                                                    <span className="ann-chip blue">Class</span>
+                                                ) : ann.department ? (
+                                                    <span className="ann-chip purple">Dept</span>
+                                                ) : (
+                                                    <span className="ann-chip global">Global</span>
+                                                )}
                                             </div>
                                         </div>
-                                        {/* Target Chip */}
-                                        {ann.course ? (
-                                            <span className="ann-chip blue">Class Specific</span>
-                                        ) : ann.department ? (
-                                            <span className="ann-chip purple">Department Wide</span>
-                                        ) : (
-                                            <span className="ann-chip gray">Global</span>
-                                        )}
-                                        {/* Actions */}
+                                        
                                         {(user.role === 'ADMIN' || user.id === ann.author) && (
                                             <button 
-                                                style={{ marginLeft: 10, background: 'none', border: 'none', color: '#f43f5e', cursor: 'pointer', padding: 4 }}
+                                                className="topbar-icon-btn"
+                                                style={{ color: '#f43f5e', background: 'transparent' }}
                                                 onClick={() => deleteAnnouncement(ann.id)}
-                                                title="Delete Announcement"
                                             >
-                                                <span className="material-icons-round" style={{ fontSize: 20 }}>delete</span>
+                                                <span className="material-icons-round" style={{ fontSize: 20 }}>delete_outline</span>
                                             </button>
                                         )}
                                     </div>
-                                    <div className="ann-card-title">{ann.title}</div>
-                                    <div className="ann-card-content">{ann.content}</div>
+
+                                    <div className="ann-card-body">
+                                        <h2 className="ann-card-title">{ann.title}</h2>
+                                        <p className="ann-card-content">{ann.content}</p>
+                                        
+                                        {imgUrl && (
+                                            <div className="ann-image-container" style={{ marginBottom: '24px', borderRadius: '16px', overflow: 'hidden', border: '1px solid #f1f5f9' }}>
+                                                <img 
+                                                    src={imgUrl} 
+                                                    alt="Announcement" 
+                                                    style={{ width: '100%', display: 'block', objectFit: 'cover', maxHeight: '500px' }}
+                                                    onClick={() => window.open(imgUrl, '_blank')}
+                                                />
+                                            </div>
+                                        )}
+                                    </div>
 
                                     {/* Comments Section */}
                                     <div className="ann-comments-section">
@@ -221,33 +263,31 @@ export default function AnnouncementsPage() {
                                             {(ann.comments || []).map(cmt => (
                                                 <div key={cmt.id} className="ann-comment">
                                                     <div className="ann-comment-avatar">
-                                                        <span className="material-icons-round" style={{ fontSize: 14 }}>person</span>
+                                                        <span className="material-icons-round" style={{ fontSize: 16 }}>account_circle</span>
                                                     </div>
                                                     <div className="ann-comment-body">
-                                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-                                                            <div className="ann-comment-author">
-                                                                {cmt.user_name} <span style={{ fontWeight: 400, color: '#94a3b8' }}>· {cmt.user_role}</span>
-                                                            </div>
-                                                            {(user.role === 'ADMIN' || user.id === cmt.user) && (
-                                                                <button
-                                                                    style={{ background: 'none', border: 'none', color: '#f43f5e', cursor: 'pointer', padding: 0 }}
-                                                                    onClick={() => deleteComment(cmt.id)}
-                                                                >
-                                                                    <span className="material-icons-round" style={{ fontSize: 14 }}>delete</span>
-                                                                </button>
-                                                            )}
+                                                        <div className="ann-comment-author">
+                                                            {cmt.user_name} <span style={{ opacity: 0.6, fontSize: '0.75rem' }}>· {cmt.user_role}</span>
                                                         </div>
                                                         <div className="ann-comment-text">{cmt.content}</div>
+                                                        {(user.role === 'ADMIN' || user.id === cmt.user) && (
+                                                            <button
+                                                                style={{ position: 'absolute', top: 10, right: 10, background: 'none', border: 'none', color: '#f44336', cursor: 'pointer', opacity: 0.4 }}
+                                                                onClick={() => deleteComment(cmt.id)}
+                                                            >
+                                                                <span className="material-icons-round" style={{ fontSize: 14 }}>close</span>
+                                                            </button>
+                                                        )}
                                                     </div>
                                                 </div>
                                             ))}
                                         </div>
-                                        <div className="ann-comment-input-row">
-                                            <div className="ann-comment-avatar you"><span className="material-icons-round">person</span></div>
+                                        <div className="ann-comment-input-row" style={{ marginTop: '10px' }}>
+                                            <div className="ann-comment-avatar you"><span className="material-icons-round">edit</span></div>
                                             <input
                                                 type="text"
                                                 className="ann-comment-input"
-                                                placeholder="Write a comment..."
+                                                placeholder="Share your thoughts..."
                                                 value={commentTexts[ann.id] || ""}
                                                 onChange={e => setCommentTexts({ ...commentTexts, [ann.id]: e.target.value })}
                                                 onKeyDown={e => {
