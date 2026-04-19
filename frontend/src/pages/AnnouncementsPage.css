@@ -109,27 +109,40 @@
 }
 .ann-card:hover { transform: translateY(-4px); box-shadow: 0 20px 50px rgba(0,0,0,0.06); }
 
+/* Card alignment fixes */
 .ann-card-header {
-    display: flex; align-items: center; gap: 18px;
+    display: flex; align-items: flex-start; gap: 16px;
     margin-bottom: 24px;
 }
+.ann-card-header-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
 .ann-avatar {
-    width: 56px; height: 56px; border-radius: 18px;
+    width: 48px; height: 48px; border-radius: 14px;
     background: #f1f5f9; color: #64748b;
     display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
 }
-.ann-avatar .material-icons-round { font-size: 32px; }
+.ann-avatar .material-icons-round { font-size: 24px; }
 
-.ann-author { font-weight: 800; color: #0f172a; font-size: 1.25rem; }
-.ann-meta { font-size: 0.9rem; color: #64748b; margin-top: 4px; font-weight: 500; font-family: 'Inter', sans-serif;}
+.ann-author { font-weight: 800; color: #0f172a; font-size: 1.1rem; line-height: 1.2; }
+.ann-meta { font-size: 0.75rem; color: #94a3b8; font-weight: 600; font-family: 'Inter', sans-serif;}
 
+.ann-chips-row {
+    display: flex; gap: 8px; margin-top: 4px;
+}
 .ann-chip {
-    padding: 6px 16px; border-radius: 100px;
-    font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.8px;
+    padding: 3px 10px; border-radius: 100px;
+    font-size: 0.65rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.8px;
 }
-.ann-chip.gray   { background: #f1f5f9; color: #475569; }
-.ann-chip.blue   { background: #eff6ff; color: #2563eb; }
-.ann-chip.purple { background: #f5f3ff; color: #7c3aed; }
+.ann-chip.admin   { background: #0f172a; color: white; }
+.ann-chip.teacher { background: #f1f5f9; color: #475569; }
+.ann-chip.global  { background: #f1f5f9; color: #64748b; }
+.ann-chip.blue    { background: #eff6ff; color: #2563eb; }
+.ann-chip.purple  { background: #f5f3ff; color: #7c3aed; }
 
 .ann-card-body { position: relative; }
 .ann-card-title { font-size: 1.75rem; font-weight: 900; color: #0f172a; margin-bottom: 16px; line-height: 1.25;}
