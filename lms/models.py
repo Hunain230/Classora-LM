@@ -97,12 +97,29 @@ class AttendanceEntry(models.Model):
     remarks = models.TextField(null=True, blank=True)
 
 class Announcement(models.Model):
+    class TargetRole(models.TextChoices):
+        ALL = "ALL", "All"
+        STUDENT = "STUDENT", "Student"
+        TEACHER = "TEACHER", "Teacher"
+
     institute = models.ForeignKey(Institute, on_delete=models.CASCADE, related_name="announcements")
     course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name="announcements", null=True, blank=True)
+    department = models.ForeignKey(Department, on_delete=models.CASCADE, related_name="announcements", null=True, blank=True)
+    target_role = models.CharField(max_length=20, choices=TargetRole.choices, default=TargetRole.ALL)
+    target_user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name="targeted_announcements", null=True, blank=True)
     title = models.CharField(max_length=255)
     content = models.TextField()
     author = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
+
+class AnnouncementComment(models.Model):
+    announcement = models.ForeignKey(Announcement, on_delete=models.CASCADE, related_name="comments")
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name="announcement_comments")
+    content = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['created_at']
 
 class AssignmentSubmission(models.Model):
     class Status(models.TextChoices):
