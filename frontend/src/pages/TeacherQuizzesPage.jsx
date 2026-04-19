@@ -72,8 +72,11 @@ export default function TeacherQuizzesPage() {
             : q));
 
     /* ── Submit quiz ── */
-    const buildDateTimeZ = (date, time) =>
-        date && time ? `${date}T${time}:00Z` : null;
+    const buildDateTime = (date, time) => {
+        if (!date || !time) return null;
+        const localDate = new Date(`${date}T${time}:00`);
+        return localDate.toISOString();
+    };
 
     const handlePublish = async (publish) => {
         if (!quizData.course || !quizData.title) {
@@ -89,8 +92,8 @@ export default function TeacherQuizzesPage() {
                 total_time_minutes: quizData.totalTime,
                 show_answers_after: quizData.showAnswers,
                 is_published: publish,
-                start_time: buildDateTimeZ(quizData.startDate, quizData.startTime),
-                end_time: buildDateTimeZ(quizData.endDate, quizData.endTime),
+                start_time: buildDateTime(quizData.startDate, quizData.startTime),
+                end_time: buildDateTime(quizData.endDate, quizData.endTime),
             };
             const quizRes = await apiClient.post("/api/lms/quizzes/", quizPayload);
             const quizId = quizRes.data.id;
