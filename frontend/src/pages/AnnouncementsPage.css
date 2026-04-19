@@ -41,7 +41,12 @@
 .ann-form-group { display: flex; flex-direction: column; gap: 6px; }
 .ann-form-group label { font-size: 0.78rem; font-weight: 800; color: #475569; text-transform: uppercase; letter-spacing: 0.5px; }
 
-.ann-form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.ann-form-row { 
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px; 
+}
+.ann-form-row > * { flex: 1; min-width: 130px; }
 
 .ann-input {
     width: 100%; padding: 10px 14px;
