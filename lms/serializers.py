@@ -2,7 +2,7 @@ from rest_framework import serializers
 from .models import (
     Course, Lecture, Assignment, Quiz, Question, 
     AttendanceRecord, AttendanceEntry, Announcement, Department,
-    AssignmentSubmission, Notification, QuizAttempt
+    AssignmentSubmission, Notification, QuizAttempt, AnnouncementComment
 )
 from accounts.serializers import UserSerializer
 
@@ -67,8 +67,20 @@ class AttendanceRecordSerializer(serializers.ModelSerializer):
         model = AttendanceRecord
         fields = "__all__"
 
+class AnnouncementCommentSerializer(serializers.ModelSerializer):
+    user_name = serializers.ReadOnlyField(source="user.full_name")
+    user_role = serializers.ReadOnlyField(source="user.role")
+    
+    class Meta:
+        model = AnnouncementComment
+        fields = "__all__"
+        read_only_fields = ["user", "created_at"]
+
 class AnnouncementSerializer(serializers.ModelSerializer):
     author_name = serializers.ReadOnlyField(source="author.full_name")
+    author_role = serializers.ReadOnlyField(source="author.role")
+    comments = AnnouncementCommentSerializer(many=True, read_only=True)
+    
     class Meta:
         model = Announcement
         fields = "__all__"
