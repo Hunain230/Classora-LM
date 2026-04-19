@@ -1,119 +1,231 @@
 import React, { useState, useEffect } from "react";
 import DashboardLayout from "../components/DashboardLayout";
 import { apiClient } from "../api/client";
-import "./TeacherLMS.css";
+import "./AnnouncementsPage.css";
 
 export default function AnnouncementsPage() {
-    const [user] = useState(JSON.parse(localStorage.getItem("current_user") || "{}"));
+    const user = JSON.parse(localStorage.getItem("current_user") || "{}");
     const [announcements, setAnnouncements] = useState([]);
-    const [formData, setFormData] = useState({ title: "", content: "", course: "" });
     const [courses, setCourses] = useState([]);
+    const [departments, setDepartments] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    const [formData, setFormData] = useState({
+        title: "",
+        content: "",
+        target_role: "ALL",
+        course: "",
+        department: ""
+    });
     const [submitting, setSubmitting] = useState(false);
+    const [commentTexts, setCommentTexts] = useState({}); // { announcementId: text }
 
     useEffect(() => {
-        fetchAnnouncements();
-        apiClient.get("/api/lms/courses/")
-            .then(res => setCourses(res.data.results || []))
-            .catch(err => console.error(err));
+        fetchData();
     }, []);
 
-    const fetchAnnouncements = () => {
-        apiClient.get("/api/lms/announcements/")
-            .then(res => {
-                const data = Array.isArray(res.data) ? res.data : (res.data.results || []);
-                setAnnouncements(data);
-            })
-            .catch(err => console.error(err));
+    const fetchData = async () => {
+        try {
+            const [annRes, crsRes, deptRes] = await Promise.all([
+                apiClient.get("/api/lms/announcements/"),
+                user.role !== "STUDENT" ? apiClient.get("/api/lms/courses/") : Promise.resolve({ data: [] }),
+                user.role === "ADMIN" ? apiClient.get("/api/lms/departments/") : Promise.resolve({ data: [] })
+            ]);
+            setAnnouncements(Array.isArray(annRes.data) ? annRes.data : (annRes.data.results || []));
+            setCourses(Array.isArray(crsRes.data) ? crsRes.data : (crsRes.data.results || []));
+            setDepartments(Array.isArray(deptRes.data) ? deptRes.data : (deptRes.data.results || []));
+        } catch (err) {
+            console.error("Failed fetching data", err);
+        } finally {
+            setLoading(false);
+        }
     };
 
     const handleInputChange = (e) => {
-        const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
+        setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setSubmitting(true);
         try {
-            await apiClient.post("/api/lms/announcements/", {
-                ...formData,
-                institute: user.institute_id
-            });
-            setFormData({ title: "", content: "", course: "" });
-            fetchAnnouncements();
+            const payload = {
+                title: formData.title,
+                content: formData.content,
+                target_role: formData.target_role,
+            };
+            if (formData.course) payload.course = formData.course;
+            if (formData.department && user.role === "ADMIN") payload.department = formData.department;
+
+            await apiClient.post("/api/lms/announcements/", payload);
+            setFormData({ title: "", content: "", target_role: "ALL", course: "", department: "" });
+            fetchData();
         } catch (err) {
-            console.error(err);
+            alert("Failed to post announcement. " + JSON.stringify(err.response?.data || ""));
         } finally {
             setSubmitting(false);
         }
     };
 
+    const postComment = async (announcementId) => {
+        const txt = commentTexts[announcementId];
+        if (!txt || !txt.trim()) return;
+        try {
+            await apiClient.post("/api/lms/announcement-comments/", {
+                announcement: announcementId,
+                content: txt
+            });
+            setCommentTexts({ ...commentTexts, [announcementId]: "" });
+            fetchData(); // Refresh to show new comment
+        } catch (err) {
+            alert("Failed to post comment.");
+        }
+    };
+
     return (
         <DashboardLayout user={user}>
-            <div className="lms-page-container">
-                <h2 className="section-title">ANNOUNCEMENTS</h2>
-                <div className="title-divider"></div>
+            <div className="ann-page-container">
+                <div className="ann-header">
+                    <h1 className="ann-title">Announcements</h1>
+                    <p className="ann-subtitle">Broadcast messages and engage with your classes</p>
+                </div>
 
-                {/* Create Announcement Form */}
-                {(user.role === 'ADMIN' || user.role === 'TEACHER') && (
-                    <div className="lms-main-form" style={{ marginBottom: '40px' }}>
-                        <h3 style={{ fontSize: '1rem', fontWeight: 800, color: '#1e293b', marginBottom: '20px' }}>Make an Announcement</h3>
-                        <form onSubmit={handleSubmit}>
-                            <div className="form-row">
-                                <div className="form-group flex-2">
-                                    <label>Title:</label>
-                                    <div className="pill-input-wrapper">
-                                        <input name="title" value={formData.title} onChange={handleInputChange} placeholder="Urgent: Class rescheduled..." required />
-                                    </div>
+                <div className="ann-layout">
+                    {/* LEFT PANEL: Creation Form (Only Admin & Teacher) */}
+                    {user.role !== "STUDENT" && (
+                        <div className="ann-create-panel">
+                            <h3 className="ann-panel-title">
+                                <span className="material-icons-round">campaign</span> Make an Announcement
+                            </h3>
+                            <form onSubmit={handleSubmit} className="ann-form">
+                                <div className="ann-form-group">
+                                    <label>Title</label>
+                                    <input type="text" name="title" className="ann-input" value={formData.title} onChange={handleInputChange} required placeholder="e.g., Campus closed on Friday" />
                                 </div>
-                                <div className="form-group flex-1">
-                                    <label>Post to Course (Optional):</label>
-                                    <div className="pill-input-wrapper">
-                                        <select name="course" value={formData.course} onChange={handleInputChange}>
-                                            <option value="">Whole Institute</option>
-                                            {courses.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+
+                                <div className="ann-form-row">
+                                    <div className="ann-form-group">
+                                        <label>Target Audience</label>
+                                        <select name="target_role" className="ann-input" value={formData.target_role} onChange={handleInputChange}>
+                                            <option value="ALL">Everyone</option>
+                                            <option value="STUDENT">Students Only</option>
+                                            <option value="TEACHER">Teachers Only</option>
                                         </select>
                                     </div>
-                                </div>
-                            </div>
-                            <div className="form-group">
-                                <label>Content:</label>
-                                <div className="pill-input-wrapper" style={{ height: '100px', padding: '15px' }}>
-                                    <textarea name="content" value={formData.content} onChange={handleInputChange} placeholder="Type announcement details here..." required style={{ height: '100%', width: '100%', background: 'transparent', border: 'none', resize: 'none' }} />
-                                </div>
-                            </div>
-                            <div className="form-actions" style={{ justifyContent: 'flex-end', marginTop: '30px' }}>
-                                <button type="submit" className="pill-submit-btn primary" style={{ width: '300px', padding: '24px' }} disabled={submitting}>
-                                    {submitting ? "POSTING..." : "POST ANNOUNCEMENT"}
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                )}
 
-                {/* Announcements List */}
-                <div className="announcements-list">
-                    {announcements.length === 0 ? (
-                        <div className="dashboard-card" style={{ textAlign: 'center', padding: '60px', color: '#94a3b8' }}>
-                            <span className="material-icons-round" style={{ fontSize: '3rem' }}>campaign</span>
-                            <p>No announcements yet.</p>
+                                    {user.role === "ADMIN" && (
+                                        <div className="ann-form-group">
+                                            <label>Specific Department</label>
+                                            <select name="department" className="ann-input" value={formData.department} onChange={handleInputChange}>
+                                                <option value="">-- All Departments --</option>
+                                                {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+                                            </select>
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="ann-form-group">
+                                    <label>Specific Class {formData.department ? "(Filter by dept)" : ""}</label>
+                                    <select name="course" className="ann-input" value={formData.course} onChange={handleInputChange}>
+                                        <option value="">-- Across {(user.role === "TEACHER" ? "My Classes" : "All Classes")} --</option>
+                                        {courses
+                                            .filter(c => !formData.department || c.department === parseInt(formData.department))
+                                            .map(c => <option key={c.id} value={c.id}>{c.code}: {c.name}</option>)
+                                        }
+                                    </select>
+                                </div>
+
+                                <div className="ann-form-group" style={{ flex: 1 }}>
+                                    <label>Message</label>
+                                    <textarea name="content" className="ann-input ann-textarea" value={formData.content} onChange={handleInputChange} required placeholder="Type the announcement details here..."></textarea>
+                                </div>
+
+                                <button type="submit" className="ann-submit-btn" disabled={submitting}>
+                                    {submitting ? "Posting..." : "Post Announcement"}
+                                    <span className="material-icons-round">send</span>
+                                </button>
+                            </form>
                         </div>
-                    ) : (
-                        announcements.map(a => (
-                            <div key={a.id} className="dashboard-card" style={{ marginBottom: '20px', borderLeft: '4px solid #2196F3' }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                                    <div>
-                                        <h4 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800 }}>{a.title}</h4>
-                                        <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '5px' }}>
-                                            Posted by {a.author_name} • {new Date(a.created_at).toLocaleDateString()}
+                    )}
+
+                    {/* RIGHT PANEL: Feed */}
+                    <div className="ann-feed">
+                        {loading && <p style={{ color: '#94a3b8' }}>Loading announcements...</p>}
+                        {!loading && announcements.length === 0 && (
+                            <div className="ann-empty">
+                                <span className="material-icons-round">notifications_none</span>
+                                <p>No announcements right now.</p>
+                            </div>
+                        )}
+
+                        {!loading && announcements.map(ann => {
+                            const d = new Date(ann.created_at);
+                            return (
+                                <div key={ann.id} className="ann-card">
+                                    <div className="ann-card-header">
+                                        <div className="ann-avatar">
+                                            <span className="material-icons-round">person</span>
+                                        </div>
+                                        <div>
+                                            <div className="ann-author">{ann.author_name}</div>
+                                            <div className="ann-meta">
+                                                {d.toLocaleDateString()} at {d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                {ann.target_role !== "ALL" && ` · To ${ann.target_role}s`}
+                                            </div>
+                                        </div>
+                                        {/* Target Chip */}
+                                        {ann.course ? (
+                                            <span className="ann-chip blue">Class Specific</span>
+                                        ) : ann.department ? (
+                                            <span className="ann-chip purple">Department Wide</span>
+                                        ) : (
+                                            <span className="ann-chip gray">Global</span>
+                                        )}
+                                    </div>
+                                    <div className="ann-card-title">{ann.title}</div>
+                                    <div className="ann-card-content">{ann.content}</div>
+
+                                    {/* Comments Section */}
+                                    <div className="ann-comments-section">
+                                        <div className="ann-comments-list">
+                                            {(ann.comments || []).map(cmt => (
+                                                <div key={cmt.id} className="ann-comment">
+                                                    <div className="ann-comment-avatar">
+                                                        <span className="material-icons-round" style={{ fontSize: 14 }}>person</span>
+                                                    </div>
+                                                    <div className="ann-comment-body">
+                                                        <div className="ann-comment-author">
+                                                            {cmt.user_name} <span style={{ fontWeight: 400, color: '#94a3b8' }}>· {cmt.user_role}</span>
+                                                        </div>
+                                                        <div className="ann-comment-text">{cmt.content}</div>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                        <div className="ann-comment-input-row">
+                                            <div className="ann-comment-avatar you"><span className="material-icons-round">person</span></div>
+                                            <input
+                                                type="text"
+                                                className="ann-comment-input"
+                                                placeholder="Write a comment..."
+                                                value={commentTexts[ann.id] || ""}
+                                                onChange={e => setCommentTexts({ ...commentTexts, [ann.id]: e.target.value })}
+                                                onKeyDown={e => {
+                                                    if (e.key === 'Enter') {
+                                                        e.preventDefault();
+                                                        postComment(ann.id);
+                                                    }
+                                                }}
+                                            />
+                                            <button className="ann-comment-send" onClick={() => postComment(ann.id)}>
+                                                <span className="material-icons-round">send</span>
+                                            </button>
                                         </div>
                                     </div>
-                                    {a.course && <span style={{ fontSize: '0.7rem', background: '#e0f2fe', color: '#0369a1', padding: '4px 10px', borderRadius: '50px', fontWeight: 700 }}>COURSE: {a.course}</span>}
                                 </div>
-                                <p style={{ marginTop: '15px', color: '#475569', lineHeight: '1.6' }}>{a.content}</p>
-                            </div>
-                        ))
-                    )}
+                            );
+                        })}
+                    </div>
                 </div>
             </div>
         </DashboardLayout>
