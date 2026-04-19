@@ -109,6 +109,7 @@ class Announcement(models.Model):
     target_user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name="targeted_announcements", null=True, blank=True)
     title = models.CharField(max_length=255)
     content = models.TextField()
+    image = models.ImageField(upload_to="announcements/", null=True, blank=True)
     author = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
 
