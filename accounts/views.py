@@ -189,6 +189,26 @@ def create_user(request):
     return Response(output.data, status=status.HTTP_201_CREATED)
 
 
+@api_view(["DELETE"])
+@permission_classes([IsAuthenticated, IsAdminRole])
+def delete_user(request, pk: int):
+    """
+    Delete a user from the admin's institute.
+    """
+    user_to_delete = get_object_or_404(CustomUser, pk=pk)
+    
+    # Ensure they only delete within their own institute
+    if request.user.institute_id != user_to_delete.institute_id:
+        return Response({"detail": "Not found or permission denied."}, status=status.HTTP_404_NOT_FOUND)
+        
+    # Prevent admin from deleting themselves
+    if request.user.id == user_to_delete.id:
+        return Response({"detail": "Cannot delete your own admin account."}, status=status.HTTP_400_BAD_REQUEST)
+        
+    user_to_delete.delete()
+    return Response({"detail": "User securely deleted"}, status=status.HTTP_204_NO_CONTENT)
+
+
 @api_view(["GET"])
 @permission_classes([IsAuthenticated, IsTeacherRole])
 def teacher_dashboard(request):
