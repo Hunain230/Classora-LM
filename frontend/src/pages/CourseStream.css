@@ -1,96 +1,121 @@
-/* CourseStream.css — Google Classroom inspired */
+/* CourseStream.css - Premium Overhaul */
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
 .cs-page {
     font-family: 'Inter', sans-serif;
     min-height: 100%;
+    color: #0f172a;
+    background: #f8fafc;
 }
 
 /* ─── Grid view ─── */
 .cs-page-header {
-    padding: 36px 40px 20px;
+    padding: 40px 50px 24px;
 }
-.cs-page-title { font-size: 2rem; font-weight: 900; color: #1e293b; margin: 0 0 4px; }
-.cs-page-sub   { color: #64748b; margin: 0; font-size: 0.92rem; }
+.cs-page-title { 
+    font-size: 2.2rem; 
+    font-weight: 900; 
+    font-family: 'Outfit', sans-serif;
+    background: linear-gradient(135deg, #1e293b, #475569);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin: 0 0 6px; 
+    letter-spacing: -0.5px;
+}
+.cs-page-sub { color: #64748b; margin: 0; font-size: 1rem; font-weight: 500; }
 
 .cs-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 22px;
-    padding: 8px 40px 40px;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 30px;
+    padding: 10px 50px 50px;
 }
 
 .cs-course-card {
     background: white;
-    border-radius: 16px;
+    border-radius: 24px;
     overflow: hidden;
-    box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.04), 0 1px 3px rgba(0,0,0,0.02);
     cursor: pointer;
-    transition: all 0.2s;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease;
     display: flex;
     flex-direction: column;
+    border: 1px solid rgba(226, 232, 240, 0.8);
 }
-.cs-course-card:hover { transform: translateY(-4px); box-shadow: 0 8px 28px rgba(0,0,0,0.12); }
+.cs-course-card:hover { transform: translateY(-6px); box-shadow: 0 20px 40px rgba(0,0,0,0.08); }
 
 .cs-banner {
     position: relative;
-    height: 120px;
-    padding: 20px;
+    height: 140px;
+    padding: 24px;
     overflow: hidden;
     display: flex;
     flex-direction: column;
     justify-content: flex-end;
 }
+.cs-banner::after {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(to top, rgba(0,0,0,0.4), transparent);
+}
 .cs-banner-title {
-    font-size: 1.05rem; font-weight: 800;
+    font-family: 'Outfit', sans-serif;
+    font-size: 1.25rem; font-weight: 800;
     color: white; line-height: 1.3;
-    text-shadow: 0 1px 4px rgba(0,0,0,0.2);
+    position: relative; z-index: 2;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.2);
 }
 .cs-banner-sub {
-    font-size: 0.78rem; color: rgba(255,255,255,0.85);
-    font-weight: 600; margin-top: 2px;
+    font-size: 0.85rem; color: rgba(255,255,255,0.9);
+    font-weight: 500; margin-top: 4px;
+    position: relative; z-index: 2;
 }
 .cs-banner-icon {
-    position: absolute; top: 14px; right: 16px;
-    font-size: 40px; color: rgba(255,255,255,0.25);
+    position: absolute; top: 16px; right: 20px;
+    font-size: 48px; color: rgba(255,255,255,0.2);
+    z-index: 1; transform: rotate(10deg);
 }
 
-.cs-card-body { padding: 16px 18px; flex: 1; display: flex; flex-direction: column; }
-.cs-card-desc  { font-size: 0.82rem; color: #64748b; line-height: 1.5; flex: 1; margin: 0 0 14px; }
-.cs-card-footer { display: flex; justify-content: space-between; align-items: center; }
+.cs-card-body { padding: 20px 24px; flex: 1; display: flex; flex-direction: column; background: white; }
+.cs-card-desc  { font-size: 0.9rem; color: #475569; line-height: 1.6; flex: 1; margin: 0 0 16px; }
+.cs-card-footer { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #f1f5f9; padding-top: 16px; }
 
 /* Chips */
 .cs-chip {
     display: inline-block;
-    padding: 3px 10px; border-radius: 20px;
-    font-size: 0.72rem; font-weight: 800;
+    padding: 4px 12px; border-radius: 20px;
+    font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;
 }
-.cs-chip.amber  { background: #fef3c7; color: #92400e; }
-.cs-chip.purple { background: #f5f3ff; color: #7c3aed; }
-.cs-chip.blue   { background: #dbeafe; color: #1d4ed8; }
-.cs-chip.green  { background: #d1fae5; color: #065f46; }
-.cs-chip.red    { background: #fee2e2; color: #dc2626; }
-.cs-chip.gray   { background: #f1f5f9; color: #64748b; }
+.cs-chip.amber  { background: #fffcf2; color: #b45309; border: 1px solid #fef08a;}
+.cs-chip.purple { background: #fdf4ff; color: #c026d3; border: 1px solid #f5d0fe;}
+.cs-chip.blue   { background: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe;}
+.cs-chip.green  { background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0;}
+.cs-chip.red    { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca;}
+.cs-chip.gray   { background: #f8fafc; color: #64748b; border: 1px solid #e2e8f0;}
 
 /* Empty */
 .cs-empty {
-    display: flex; flex-direction: column; align-items: center;
-    gap: 12px; color: #94a3b8; padding: 80px 20px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 16px; color: #94a3b8; padding: 100px 20px; text-align: center;
+    background: rgba(255,255,255,0.6); backdrop-filter: blur(10px);
+    border-radius: 24px; border: 2px dashed #cbd5e1;
 }
-.cs-empty .material-icons-round { font-size: 48px; }
-.cs-empty p { font-size: 0.95rem; font-weight: 600; margin: 0; }
+.cs-empty .material-icons-round { font-size: 64px; color: #cbd5e1; }
+.cs-empty p { font-size: 1.1rem; font-weight: 600; margin: 0; }
 
 /* ─── Stream Layout ─── */
 .cs-stream-layout {
     display: grid;
-    grid-template-columns: 260px 1fr;
+    grid-template-columns: 280px 1fr;
     min-height: 100vh;
 }
 
 /* Sidebar */
 .cs-sidebar {
-    background: white;
-    border-right: 1px solid #f1f5f9;
-    padding: 16px 10px;
+    background: rgba(255,255,255,0.7);
+    backdrop-filter: blur(20px);
+    border-right: 1px solid #e2e8f0;
+    padding: 24px 16px;
     position: sticky;
     top: 0;
     height: 100vh;
@@ -100,134 +125,149 @@
 .cs-sidebar-item {
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 10px 12px;
-    border-radius: 12px;
+    gap: 14px;
+    padding: 12px 14px;
+    border-radius: 16px;
     cursor: pointer;
-    transition: background 0.15s;
-    margin-bottom: 4px;
+    transition: all 0.2s ease;
+    margin-bottom: 6px;
 }
-.cs-sidebar-item:hover  { background: #f8fafc; }
-.cs-sidebar-item.active { background: #f5f3ff; }
+.cs-sidebar-item:hover  { background: #f1f5f9; transform: translateX(4px); }
+.cs-sidebar-item.active { background: #f5f3ff; box-shadow: inset 2px 0 0 #8b5cf6; }
 
 .cs-sidebar-dot {
-    width: 36px; height: 36px;
-    border-radius: 10px; flex-shrink: 0;
+    width: 40px; height: 40px;
+    border-radius: 12px; flex-shrink: 0;
+    box-shadow: inset 0 2px 4px rgba(255,255,255,0.4);
 }
-.cs-sidebar-name { font-weight: 700; color: #1e293b; font-size: 0.85rem; }
-.cs-sidebar-code { font-size: 0.72rem; color: #94a3b8; }
+.cs-sidebar-name { font-weight: 800; color: #0f172a; font-size: 0.9rem; }
+.cs-sidebar-code { font-size: 0.75rem; color: #64748b; font-weight: 500; }
 
 /* Main stream area */
 .cs-main { background: #f8fafc; }
 
-/* Hero banner */
+/* Premium Hero banner */
 .cs-hero {
     position: relative;
-    height: 180px;
-    padding: 28px 36px;
+    height: 220px;
+    padding: 32px 48px;
     overflow: hidden;
     display: flex;
     flex-direction: column;
     justify-content: flex-end;
 }
-.cs-hero-content { position: relative; z-index: 1; }
-.cs-hero-title { font-size: 1.8rem; font-weight: 900; color: white; margin: 0 0 4px; text-shadow: 0 2px 8px rgba(0,0,0,0.2); }
-.cs-hero-sub   { font-size: 0.9rem; color: rgba(255,255,255,0.85); font-weight: 600; margin: 0; }
-.cs-hero-icon  { position: absolute; right: 40px; top: 50%; transform: translateY(-50%); font-size: 90px; color: rgba(255,255,255,0.15); }
+.cs-hero::after {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(to top, rgba(0,0,0,0.5), transparent);
+}
+.cs-hero-content { position: relative; z-index: 2; }
+.cs-hero-title { 
+    font-family: 'Outfit', sans-serif;
+    font-size: 2.5rem; font-weight: 900; color: white; margin: 0 0 8px; 
+    text-shadow: 0 4px 12px rgba(0,0,0,0.3); letter-spacing: -0.5px;
+}
+.cs-hero-sub   { font-size: 1.05rem; color: rgba(255,255,255,0.95); font-weight: 600; margin: 0; }
+.cs-hero-icon  { 
+    position: absolute; right: 60px; top: 50%; transform: translateY(-50%) rotate(-10deg); 
+    font-size: 120px; color: rgba(255,255,255,0.1); z-index: 1; 
+}
 
 .cs-back-btn {
-    position: absolute; top: 16px; left: 16px;
-    display: flex; align-items: center; gap: 4px;
-    background: rgba(255,255,255,0.2); border: none;
-    color: white; font-weight: 700; font-size: 0.8rem;
-    padding: 6px 14px; border-radius: 20px; cursor: pointer;
-    backdrop-filter: blur(4px); transition: background 0.2s;
-    font-family: 'Inter', sans-serif;
+    position: absolute; top: 20px; left: 24px; z-index: 10;
+    display: flex; align-items: center; gap: 6px;
+    background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3);
+    color: white; font-weight: 700; font-size: 0.85rem;
+    padding: 8px 16px; border-radius: 20px; cursor: pointer;
+    backdrop-filter: blur(8px); transition: all 0.2s ease;
 }
-.cs-back-btn:hover { background: rgba(255,255,255,0.3); }
+.cs-back-btn:hover { background: rgba(255,255,255,0.25); transform: translateX(-2px); }
 
 /* Stream body */
 .cs-stream-body {
     display: grid;
-    grid-template-columns: 1fr 260px;
-    gap: 24px;
-    padding: 24px 28px;
+    grid-template-columns: 1fr 300px;
+    gap: 32px;
+    padding: 32px 48px;
     align-items: start;
 }
 
 /* Upcoming widget */
 .cs-upcoming-widget {
-    background: white;
-    border-radius: 16px;
-    padding: 18px 20px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    background: rgba(255,255,255,0.8);
+    backdrop-filter: blur(20px); border: 1px solid rgba(226,232,240,0.8);
+    border-radius: 20px;
+    padding: 24px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.03);
     position: sticky;
-    top: 20px;
+    top: 24px;
 }
 .cs-widget-title {
-    display: flex; align-items: center; gap: 6px;
-    font-size: 0.88rem; font-weight: 800; color: #1e293b;
-    margin-bottom: 14px;
+    display: flex; align-items: center; gap: 8px;
+    font-size: 1rem; font-weight: 800; color: #0f172a;
+    margin-bottom: 16px; font-family: 'Outfit', sans-serif;
 }
-.cs-widget-title .material-icons-round { font-size: 18px; color: #7c3aed; }
+.cs-widget-title .material-icons-round { font-size: 22px; color: #8b5cf6; }
 
 .cs-upcoming-item {
-    display: flex; align-items: flex-start; gap: 8px;
-    padding: 10px 0; border-bottom: 1px solid #f8fafc;
-    cursor: pointer; transition: opacity 0.15s;
+    display: flex; align-items: flex-start; gap: 10px;
+    padding: 12px 0; border-bottom: 1px dashed #e2e8f0;
+    cursor: pointer; transition: opacity 0.2s;
 }
-.cs-upcoming-item:last-child { border-bottom: none; }
-.cs-upcoming-item:hover { opacity: 0.75; }
+.cs-upcoming-item:last-child { border-bottom: none; padding-bottom: 0; }
+.cs-upcoming-item:hover { opacity: 0.7; }
 
 /* Feed */
-.cs-feed { display: flex; flex-direction: column; gap: 14px; }
+.cs-feed { display: flex; flex-direction: column; gap: 20px; }
 
 /* Stream cards */
 .cs-stream-card {
     background: white;
-    border-radius: 14px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-    padding: 20px 22px;
-    transition: box-shadow 0.2s;
+    border-radius: 20px; border: 1px solid rgba(226,232,240,0.8);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.03);
+    padding: 28px;
+    transition: box-shadow 0.3s ease, transform 0.3s ease;
 }
-.cs-stream-card:hover { box-shadow: 0 6px 18px rgba(0,0,0,0.09); }
+.cs-stream-card:hover { box-shadow: 0 15px 35px rgba(0,0,0,0.06); transform: translateY(-2px); }
 
 .cs-stream-card-header {
-    display: flex; align-items: flex-start; gap: 12px; margin-bottom: 10px;
+    display: flex; align-items: flex-start; gap: 16px; margin-bottom: 14px;
 }
 .cs-stream-type-icon {
-    width: 36px; height: 36px; border-radius: 10px;
+    width: 44px; height: 44px; border-radius: 12px;
     display: flex; align-items: center; justify-content: center;
-    flex-shrink: 0;
+    flex-shrink: 0; box-shadow: inset 0 2px 4px rgba(255,255,255,0.6);
 }
-.cs-stream-type-icon .material-icons-round { font-size: 20px; }
+.cs-stream-type-icon .material-icons-round { font-size: 24px; }
 
-.cs-stream-eyebrow { font-size: 0.72rem; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px; }
-.cs-stream-card-title { font-size: 1rem; font-weight: 800; color: #1e293b; }
-.cs-stream-desc { font-size: 0.85rem; color: #475569; line-height: 1.5; margin: 0 0 12px; }
+.cs-stream-eyebrow { font-size: 0.75rem; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 4px; }
+.cs-stream-card-title { font-size: 1.25rem; font-weight: 800; color: #0f172a; font-family: 'Outfit', sans-serif; line-height: 1.3;}
+.cs-stream-desc { font-size: 0.95rem; color: #334155; line-height: 1.6; margin: 0 0 16px; }
 
 .cs-stream-meta {
-    display: flex; gap: 16px; flex-wrap: wrap;
-    font-size: 0.78rem; color: #64748b; font-weight: 600;
-    margin-bottom: 12px;
+    display: flex; gap: 18px; flex-wrap: wrap;
+    font-size: 0.8rem; color: #64748b; font-weight: 600;
+    margin-bottom: 16px; padding: 10px 14px; background: #f8fafc; border-radius: 12px;
 }
-.cs-stream-meta .material-icons-round { font-size: 14px; vertical-align: middle; }
+.cs-stream-meta .material-icons-round { font-size: 16px; vertical-align: middle; color: #94a3b8; }
 
-.cs-stream-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.cs-stream-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px;}
 
 .cs-action-btn {
-    display: inline-flex; align-items: center; gap: 6px;
-    padding: 7px 14px; border-radius: 10px;
-    font-size: 0.8rem; font-weight: 700; cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    padding: 10px 18px; border-radius: 12px;
+    font-size: 0.85rem; font-weight: 700; cursor: pointer;
     border: none; text-decoration: none;
-    transition: all 0.15s; font-family: 'Inter', sans-serif;
+    transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1); 
+    font-family: 'Inter', sans-serif;
 }
-.cs-action-btn .material-icons-round { font-size: 15px; }
-.cs-action-btn.file   { background: #eff6ff; color: #2196F3; }
-.cs-action-btn.link   { background: #f5f3ff; color: #7c3aed; }
-.cs-action-btn.submit { background: linear-gradient(135deg, #2196F3, #1565C0); color: white; }
-.cs-action-btn.grade  { background: #d1fae5; color: #065f46; cursor: default; }
-.cs-action-btn:hover:not(.grade) { filter: brightness(0.95); transform: translateY(-1px); }
+.cs-action-btn .material-icons-round { font-size: 18px; }
+.cs-action-btn.file   { background: #eff6ff; color: #2563eb; }
+.cs-action-btn.file:hover { background: #dbeafe; transform: scale(1.02); }
+.cs-action-btn.link   { background: #fdf4ff; color: #c026d3; }
+.cs-action-btn.link:hover { background: #fae8ff; transform: scale(1.02); }
+.cs-action-btn.submit { background: linear-gradient(135deg, #3b82f6, #6366f1); color: white; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3); }
+.cs-action-btn.submit:hover { transform: translateY(-2px) scale(1.02); box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4); }
+.cs-action-btn.grade  { background: #f0fdf4; color: #16a34a; cursor: default; }
 
 /* Responsive */
 @media (max-width: 1024px) {
@@ -237,9 +277,9 @@
     .cs-upcoming-widget { position: static; }
 }
 @media (max-width: 600px) {
-    .cs-grid { grid-template-columns: 1fr; padding: 8px 16px 32px; }
-    .cs-page-header { padding: 24px 16px 16px; }
-    .cs-stream-body { padding: 16px; }
-    .cs-hero { height: 140px; padding: 20px; }
-    .cs-hero-title { font-size: 1.3rem; }
+    .cs-grid { grid-template-columns: 1fr; padding: 12px 24px 40px; }
+    .cs-page-header { padding: 32px 24px 20px; }
+    .cs-stream-body { padding: 24px; }
+    .cs-hero { height: 160px; padding: 24px; }
+    .cs-hero-title { font-size: 1.6rem; }
 }
