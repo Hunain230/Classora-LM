@@ -82,14 +82,16 @@ export default function AnnouncementsPage() {
         const txt = commentTexts[announcementId];
         if (!txt || !txt.trim()) return;
         try {
-            await apiClient.post("/api/lms/announcement-comments/", {
+            const response = await apiClient.post("/api/lms/announcement-comments/", {
                 announcement: announcementId,
                 content: txt
             });
             setCommentTexts({ ...commentTexts, [announcementId]: "" });
-            fetchData(); // Refresh to show new comment
-        } catch (err) {
-            alert("Failed to post comment.");
+            fetchData();
+        } catch(err) {
+            const msg = err.response?.data?.detail || err.response?.data?.content?.[0] || "Server error";
+            alert(`Failed to post comment: ${msg}`);
+            console.error("Comment Error:", err.response?.data);
         }
     };
 
