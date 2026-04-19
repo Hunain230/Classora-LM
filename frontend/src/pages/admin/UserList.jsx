@@ -9,7 +9,7 @@ export default function UserList({ instituteId }) {
   const [pageSize, setPageSize] = useState(10);
   const [error, setError] = useState("");
 
-  useEffect(() => {
+  const fetchUsers = () => {
     if (!instituteId) return;
     apiClient
       .get("/api/users/", {
@@ -24,7 +24,21 @@ export default function UserList({ instituteId }) {
         console.error(err);
         setError("Failed to load user database.");
       });
+  };
+
+  useEffect(() => {
+    fetchUsers();
   }, [instituteId, search, page]);
+
+  const deleteUser = async (userId) => {
+    if (!window.confirm("Are you sure you want to permanently delete this user? All their data will be purged!")) return;
+    try {
+      await apiClient.delete(`/api/users/${userId}/delete/`);
+      fetchUsers();
+    } catch(err) {
+      alert("Error deleting user: " + (err.response?.data?.detail || err.message));
+    }
+  };
 
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
@@ -60,6 +74,7 @@ export default function UserList({ instituteId }) {
               <th>Member Name</th>
               <th>Email Address</th>
               <th>System Role</th>
+              <th style={{ width: 80, textAlign: 'center' }}>Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -68,6 +83,17 @@ export default function UserList({ instituteId }) {
                 <td><strong>{u.full_name}</strong></td>
                 <td>{u.email}</td>
                 <td><span style={{ color: '#2196F3', fontWeight: 'bold' }}>{u.role}</span></td>
+                <td style={{ textAlign: 'center' }}>
+                  {u.role !== 'ADMIN' && (
+                    <button 
+                      style={{ background: 'none', border: 'none', color: '#f43f5e', cursor: 'pointer', padding: 4 }}
+                      onClick={() => deleteUser(u.id)}
+                      title="Permanently Delete User"
+                    >
+                      <span className="material-icons-round" style={{ fontSize: 20 }}>delete</span>
+                    </button>
+                  )}
+                </td>
               </tr>
             ))}
             {users.length === 0 && (
