@@ -4,13 +4,13 @@ from rest_framework.response import Response
 from .models import (
     Course, Lecture, Assignment, Quiz, Question,
     AttendanceRecord, AttendanceEntry, Announcement, Department,
-    AssignmentSubmission, Notification, QuizAttempt
+    AssignmentSubmission, Notification, QuizAttempt, AnnouncementComment
 )
 from .serializers import (
     CourseSerializer, LectureSerializer, AssignmentSerializer, QuizSerializer,
     QuestionSerializer, AttendanceRecordSerializer, AttendanceEntrySerializer,
     AnnouncementSerializer, DepartmentSerializer, AssignmentSubmissionSerializer,
-    NotificationSerializer, QuizAttemptSerializer
+    NotificationSerializer, QuizAttemptSerializer, AnnouncementCommentSerializer
 )
 
 class DepartmentViewSet(viewsets.ModelViewSet):
@@ -171,17 +171,112 @@ class AttendanceViewSet(viewsets.ModelViewSet):
         return Response({'status': 'attendance marked'})
 
 class AnnouncementViewSet(viewsets.ModelViewSet):
-    queryset = Announcement.objects.all()
+    queryset = Announcement.objects.all().order_by('-created_at')
     serializer_class = AnnouncementSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
         user = self.request.user
         if not user.is_authenticated: return self.queryset.none()
-        return self.queryset.filter(institute=user.institute)
+        from django.db.models import Q
+        from accounts.models import CustomUser
+        
+        # Base filter: in the same institute
+        qs = self.queryset.filter(institute=user.institute)
+        
+        if user.role == "ADMIN":
+            return qs
+            
+        elif user.role == "TEACHER":
+            # Teacher sees: ALL, TEACHER, or their specific course, or targeted to them
+            q_target = Q(target_role__in=['ALL', 'TEACHER']) | Q(target_user=user)
+            # Course target: null (meaning institute/department wide) OR their specific taught course
+            q_course = Q(course__isnull=True) | Q(course__teachers=user)
+            # Department target: null OR their course's department
+            q_dept = Q(department__isnull=True)
+            return qs.filter(q_target, q_course, q_dept).distinct()
+
+        elif user.role == "STUDENT":
+            # Student sees: ALL, STUDENT, their enrolled courses, their department, or targeted to them
+            q_target = Q(target_role__in=['ALL', 'STUDENT']) | Q(target_user=user)
+            q_course = Q(course__isnull=True) | Q(course__students=user)
+            
+            # Additional logic for department: students are linked via enrolled_courses
+            q_dept = Q(department__isnull=True) | Q(department__courses__students=user)
+            
+            return qs.filter(q_target, q_course, q_dept).distinct()
+            
+        return self.queryset.none()
 
     def perform_create(self, serializer):
-        serializer.save(author=self.request.user, institute=self.request.user.institute)
+        user = self.request.user
+        if user.role == "STUDENT":
+            from rest_framework.exceptions import PermissionDenied
+            raise PermissionDenied("Students cannot create announcements.")
+            
+        announcement = serializer.save(author=user, institute=user.institute)
+        
+        # Dispatch notification to targets
+        targets = []
+        from django.db.models import Q
+        from accounts.models import CustomUser
+        
+        if announcement.target_user:
+            targets.append(announcement.target_user)
+        else:
+            base_users = CustomUser.objects.filter(institute=user.institute)
+            if announcement.target_role != 'ALL':
+                base_users = base_users.filter(role=announcement.target_role)
+                
+            if announcement.course:
+                if announcement.target_role == 'STUDENT':
+                    base_users = base_users.filter(enrolled_courses=announcement.course)
+                elif announcement.target_role == 'TEACHER':
+                    base_users = base_users.filter(courses_taught=announcement.course)
+                else:
+                    base_users = base_users.filter(Q(enrolled_courses=announcement.course) | Q(courses_taught=announcement.course))
+                    
+            elif announcement.department:
+                if announcement.target_role == 'STUDENT':
+                    base_users = base_users.filter(enrolled_courses__department=announcement.department)
+                elif announcement.target_role == 'TEACHER':
+                    base_users = base_users.filter(courses_taught__department=announcement.department)
+                else:
+                    base_users = base_users.filter(Q(enrolled_courses__department=announcement.department) | Q(courses_taught__department=announcement.department))
+            
+            targets = list(set(base_users))
+
+        if targets:
+            Notification.objects.bulk_create([
+                Notification(
+                    user=target,
+                    title="New Announcement",
+                    message=f"New announcement from {user.full_name}: {announcement.title}"
+                ) for target in targets if target != user
+            ])
+
+
+class AnnouncementCommentViewSet(viewsets.ModelViewSet):
+    queryset = AnnouncementComment.objects.all()
+    serializer_class = AnnouncementCommentSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        announcement_id = self.request.query_params.get('announcement')
+        if announcement_id:
+            return self.queryset.filter(announcement_id=announcement_id)
+        return self.queryset.none()
+
+    def perform_create(self, serializer):
+        comment = serializer.save(user=self.request.user)
+        
+        # Notify the announcement author if someone else comments
+        if comment.announcement.author != self.request.user:
+            Notification.objects.create(
+                user=comment.announcement.author,
+                title="New Comment on Announcement",
+                message=f"{self.request.user.full_name} commented on your announcement: '{comment.announcement.title}'"
+            )
 
 class AssignmentSubmissionViewSet(viewsets.ModelViewSet):
     queryset = AssignmentSubmission.objects.all()
