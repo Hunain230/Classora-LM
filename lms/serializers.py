@@ -80,10 +80,20 @@ class AnnouncementSerializer(serializers.ModelSerializer):
     author_name = serializers.ReadOnlyField(source="author.full_name")
     author_role = serializers.ReadOnlyField(source="author.role")
     comments = AnnouncementCommentSerializer(many=True, read_only=True)
+    image_url = serializers.SerializerMethodField()
     
     class Meta:
         model = Announcement
         fields = "__all__"
+        read_only_fields = ["author", "institute", "created_at"]
+
+    def get_image_url(self, obj):
+        if obj.image:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.image.url)
+            return f"/media/{obj.image}"
+        return None
 
 class AssignmentSubmissionSerializer(serializers.ModelSerializer):
     student_name = serializers.ReadOnlyField(source="student.full_name")
