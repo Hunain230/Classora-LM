@@ -24,6 +24,12 @@ class DepartmentViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(institute=self.request.user.institute)
 
+    def destroy(self, request, *args, **kwargs):
+        if request.user.role != "ADMIN":
+            from rest_framework.exceptions import PermissionDenied
+            raise PermissionDenied("Only an admin can perform this action.")
+        return super().destroy(request, *args, **kwargs)
+
 class CourseViewSet(viewsets.ModelViewSet):
     queryset = Course.objects.all()
     serializer_class = CourseSerializer
@@ -44,6 +50,32 @@ class CourseViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(institute=self.request.user.institute)
+
+    @action(detail=True, methods=['post'], url_path='remove_user')
+    def remove_user(self, request, pk=None):
+        if request.user.role != "ADMIN":
+            from rest_framework.exceptions import PermissionDenied
+            raise PermissionDenied("Only an admin can remove users from an enrollment.")
+        
+        course = self.get_object()
+        user_id = request.data.get('user_id')
+        if not user_id:
+            return Response({"detail": "user_id is required."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        from accounts.models import CustomUser
+        try:
+            target_user = CustomUser.objects.get(id=user_id, institute=request.user.institute)
+        except CustomUser.DoesNotExist:
+            return Response({"detail": "User not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        if target_user.role == "TEACHER":
+            course.teachers.remove(target_user)
+        elif target_user.role == "STUDENT":
+            course.students.remove(target_user)
+        else:
+            return Response({"detail": "Cannot remove admin."}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response({"detail": "User securely removed from course"}, status=status.HTTP_200_OK)
 
 class LectureViewSet(viewsets.ModelViewSet):
     queryset = Lecture.objects.all()
@@ -88,6 +120,16 @@ class AssignmentViewSet(viewsets.ModelViewSet):
             ))
         Notification.objects.bulk_create(notifications)
 
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        if request.user.role == "STUDENT":
+            from rest_framework.exceptions import PermissionDenied
+            raise PermissionDenied("Students cannot delete assignments.")
+        if request.user.role == "TEACHER" and request.user not in instance.course.teachers.all():
+            from rest_framework.exceptions import PermissionDenied
+            raise PermissionDenied("You can only delete assignments for your own courses.")
+        return super().destroy(request, *args, **kwargs)
+
 class QuizViewSet(viewsets.ModelViewSet):
     queryset = Quiz.objects.all()
     serializer_class = QuizSerializer
@@ -123,6 +165,16 @@ class QuizViewSet(viewsets.ModelViewSet):
                 message=f"Quiz '{quiz.title}' is now available for {quiz.course.name}."
             ) for s in students
         ])
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        if request.user.role == "STUDENT":
+            from rest_framework.exceptions import PermissionDenied
+            raise PermissionDenied("Students cannot delete quizzes.")
+        if request.user.role == "TEACHER" and request.user not in instance.course.teachers.all():
+            from rest_framework.exceptions import PermissionDenied
+            raise PermissionDenied("You can only delete quizzes for your own courses.")
+        return super().destroy(request, *args, **kwargs)
 
 class QuestionViewSet(viewsets.ModelViewSet):
     queryset = Question.objects.all()
@@ -254,6 +306,20 @@ class AnnouncementViewSet(viewsets.ModelViewSet):
                     message=f"New announcement from {user.full_name}: {announcement.title}"
                 ) for target in targets if target != user
             ])
+            
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        if request.user.role != "ADMIN" and instance.author != request.user:
+            from rest_framework.exceptions import PermissionDenied
+            raise PermissionDenied("You can only delete your own announcements.")
+        return super().destroy(request, *args, **kwargs)
+
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        if request.user.role != "ADMIN" and instance.author != request.user:
+            from rest_framework.exceptions import PermissionDenied
+            raise PermissionDenied("You can only edit your own announcements.")
+        return super().update(request, *args, **kwargs)
 
 
 class AnnouncementCommentViewSet(viewsets.ModelViewSet):
@@ -277,6 +343,20 @@ class AnnouncementCommentViewSet(viewsets.ModelViewSet):
                 title="New Comment on Announcement",
                 message=f"{self.request.user.full_name} commented on your announcement: '{comment.announcement.title}'"
             )
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        if request.user.role != "ADMIN" and instance.user != request.user:
+            from rest_framework.exceptions import PermissionDenied
+            raise PermissionDenied("You can only delete your own comments.")
+        return super().destroy(request, *args, **kwargs)
+
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        if request.user.role != "ADMIN" and instance.user != request.user:
+            from rest_framework.exceptions import PermissionDenied
+            raise PermissionDenied("You can only edit your own comments.")
+        return super().update(request, *args, **kwargs)
 
 class AssignmentSubmissionViewSet(viewsets.ModelViewSet):
     queryset = AssignmentSubmission.objects.all()
