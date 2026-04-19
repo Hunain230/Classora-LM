@@ -34,8 +34,9 @@ export default function CoursesPage() {
     const [announcements, setAnnouncements] = React.useState([]);
     const [loading, setLoading]       = React.useState(true);
     const [selectedCourse, setSelectedCourse] = React.useState(null);
+    const [commentTexts, setCommentTexts] = React.useState({});
 
-    React.useEffect(() => {
+    const refreshData = () => {
         if (user.role && user.role !== 'ADMIN') {
             const promises = [
                 apiClient.get("/api/lms/courses/"),
@@ -58,7 +59,26 @@ export default function CoursesPage() {
                 setMyAttempts(atMap);
             }).catch(console.error).finally(() => setLoading(false));
         } else { setLoading(false); }
+    };
+
+    React.useEffect(() => {
+        refreshData();
     }, [user.role]);
+
+    const postComment = async (annId) => {
+        const txt = commentTexts[annId];
+        if (!txt || !txt.trim()) return;
+        try {
+            await apiClient.post("/api/lms/announcement-comments/", {
+                announcement: annId,
+                content: txt
+            });
+            setCommentTexts({ ...commentTexts, [annId]: "" });
+            refreshData();
+        } catch(err) {
+            alert("Failed to post comment");
+        }
+    };
 
     if (user.role === 'ADMIN') return <CreateCoursePage />;
     if (loading) return <DashboardLayout user={user}><div style={{ padding: '80px', textAlign: 'center', color: '#94a3b8' }}>Loading...</div></DashboardLayout>;
@@ -326,6 +346,47 @@ export default function CoursesPage() {
                                                         <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>{new Date(item.created_at).toLocaleDateString()}</span>
                                                     </div>
                                                     <p className="cs-stream-desc">{item.content}</p>
+
+                                                    {/* Announcements Comments block directly inside stream */}
+                                                    <div style={{ borderTop: '1px solid #f1f5f9', paddingTop: 16, marginTop: 16 }}>
+                                                        <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 16 }}>
+                                                            {(item.comments || []).map(cmt => (
+                                                                <div key={cmt.id} style={{ display: 'flex', gap: 10 }}>
+                                                                    <div style={{ width: 28, height: 28, borderRadius: '50%', background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                                                        <span className="material-icons-round" style={{ fontSize: 14, color: '#94a3b8' }}>person</span>
+                                                                    </div>
+                                                                    <div style={{ background: '#f8fafc', padding: '10px 14px', borderRadius: '0 12px 12px 12px', fontSize: '0.85rem' }}>
+                                                                        <div style={{ fontWeight: 800, color: '#1e293b', marginBottom: 2 }}>{cmt.user_name} <span style={{ fontWeight: 400, color: '#94a3b8' }}>· {cmt.user_role}</span></div>
+                                                                        <div style={{ color: '#475569' }}>{cmt.content}</div>
+                                                                    </div>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                                                            <div style={{ width: 32, height: 32, borderRadius: '50%', background: '#e0e7ff', color: '#4f46e5', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                                                <span className="material-icons-round" style={{ fontSize: 16 }}>person</span>
+                                                            </div>
+                                                            <input
+                                                                type="text"
+                                                                placeholder="Add class comment..."
+                                                                style={{ flex: 1, padding: '10px 16px', borderRadius: 20, border: '1px solid #e2e8f0', outline: 'none', background: '#f8fafc', fontSize: '0.85rem' }}
+                                                                value={commentTexts[item.id] || ""}
+                                                                onChange={e => setCommentTexts({ ...commentTexts, [item.id]: e.target.value })}
+                                                                onKeyDown={e => {
+                                                                    if (e.key === 'Enter') {
+                                                                        e.preventDefault();
+                                                                        postComment(item.id);
+                                                                    }
+                                                                }}
+                                                            />
+                                                            <button
+                                                                style={{ background: 'none', border: 'none', color: '#7c3aed', cursor: 'pointer', display: 'flex' }}
+                                                                onClick={() => postComment(item.id)}
+                                                            >
+                                                                <span className="material-icons-round">send</span>
+                                                            </button>
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             );
                                         }
