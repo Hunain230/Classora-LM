@@ -343,6 +343,7 @@ export default function CoursesPage() {
                                         }
 
                                         if (item._type === "announcement") {
+                                            const imgUrl = item.image_url || (item.image ? `http://localhost:8000${item.image}` : null);
                                             return (
                                                 <div key={`ann-${item.id}`} className="cs-stream-card" style={{ borderLeft: '4px solid #64748b' }}>
                                                     <div className="cs-stream-card-header">
@@ -357,6 +358,17 @@ export default function CoursesPage() {
                                                     </div>
                                                     <p className="cs-stream-desc">{item.content}</p>
 
+                                                    {imgUrl && (
+                                                        <div className="cs-stream-image-wrap" style={{ marginBottom: 20 }}>
+                                                            <img 
+                                                                src={imgUrl} 
+                                                                alt="Media" 
+                                                                style={{ width: '100%', borderRadius: 16, cursor: 'zoom-in', objectFit: 'cover', maxHeight: 400 }}
+                                                                onClick={() => window.open(imgUrl, '_blank')}
+                                                            />
+                                                        </div>
+                                                    )}
+
                                                     {/* Announcements Comments block directly inside stream */}
                                                     <div style={{ borderTop: '1px solid #f1f5f9', paddingTop: 16, marginTop: 16 }}>
                                                         <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 16 }}>
@@ -365,7 +377,7 @@ export default function CoursesPage() {
                                                                     <div style={{ width: 28, height: 28, borderRadius: '50%', background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                                                         <span className="material-icons-round" style={{ fontSize: 14, color: '#94a3b8' }}>person</span>
                                                                     </div>
-                                                                    <div style={{ background: '#f8fafc', padding: '10px 14px', borderRadius: '0 12px 12px 12px', fontSize: '0.85rem' }}>
+                                                                    <div style={{ background: '#f8fafc', padding: '10px 14px', borderRadius: '0 12px 12px 12px', fontSize: '0.85rem', flex: 1, position: 'relative' }}>
                                                                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 2 }}>
                                                                             <div style={{ fontWeight: 800, color: '#1e293b' }}>
                                                                                 {cmt.user_name} <span style={{ fontWeight: 400, color: '#94a3b8' }}>· {cmt.user_role}</span>
