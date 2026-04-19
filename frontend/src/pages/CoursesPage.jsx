@@ -80,6 +80,16 @@ export default function CoursesPage() {
         }
     };
 
+    const deleteComment = async (id) => {
+        if (!window.confirm("Delete your comment?")) return;
+        try {
+            await apiClient.delete(`/api/lms/announcement-comments/${id}/`);
+            refreshData();
+        } catch(err) {
+            alert("Failed to delete comment.");
+        }
+    };
+
     if (user.role === 'ADMIN') return <CreateCoursePage />;
     if (loading) return <DashboardLayout user={user}><div style={{ padding: '80px', textAlign: 'center', color: '#94a3b8' }}>Loading...</div></DashboardLayout>;
 
@@ -356,7 +366,19 @@ export default function CoursesPage() {
                                                                         <span className="material-icons-round" style={{ fontSize: 14, color: '#94a3b8' }}>person</span>
                                                                     </div>
                                                                     <div style={{ background: '#f8fafc', padding: '10px 14px', borderRadius: '0 12px 12px 12px', fontSize: '0.85rem' }}>
-                                                                        <div style={{ fontWeight: 800, color: '#1e293b', marginBottom: 2 }}>{cmt.user_name} <span style={{ fontWeight: 400, color: '#94a3b8' }}>· {cmt.user_role}</span></div>
+                                                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 2 }}>
+                                                                            <div style={{ fontWeight: 800, color: '#1e293b' }}>
+                                                                                {cmt.user_name} <span style={{ fontWeight: 400, color: '#94a3b8' }}>· {cmt.user_role}</span>
+                                                                            </div>
+                                                                            {(user.role === 'ADMIN' || user.id === cmt.user) && (
+                                                                                <button
+                                                                                    style={{ background: 'none', border: 'none', color: '#f43f5e', cursor: 'pointer', padding: 0 }}
+                                                                                    onClick={() => deleteComment(cmt.id)}
+                                                                                >
+                                                                                    <span className="material-icons-round" style={{ fontSize: 13 }}>delete</span>
+                                                                                </button>
+                                                                            )}
+                                                                        </div>
                                                                         <div style={{ color: '#475569' }}>{cmt.content}</div>
                                                                     </div>
                                                                 </div>
