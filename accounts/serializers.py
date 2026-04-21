@@ -158,3 +158,84 @@ class CreateUserSerializer(serializers.Serializer):
             institute=institute,
             is_active=True,
         )
+
+
+class ForgotPasswordSerializer(serializers.Serializer):
+    """Validates that the provided email belongs to an existing user."""
+
+    email = serializers.EmailField()
+
+    def validate_email(self, value: str) -> str:
+        if not CustomUser.objects.filter(email__iexact=value).exists():
+            raise serializers.ValidationError("No account found with this email address.")
+        return value
+
+
+class VerifyResetCodeSerializer(serializers.Serializer):
+    """Validates that the code matches, is not expired, and has not been used."""
+
+    email = serializers.EmailField()
+    code = serializers.RegexField(r"^\d{6}$")
+
+    def validate(self, attrs):
+        from .models import PasswordResetCode
+
+        email = attrs["email"]
+        code = attrs["code"]
+
+        try:
+            user = CustomUser.objects.get(email__iexact=email)
+        except CustomUser.DoesNotExist:
+            raise serializers.ValidationError("No account found with this email address.")
+
+        reset_code = (
+            PasswordResetCode.objects.filter(user=user, code=code, is_used=False)
+            .order_by("-created_at")
+            .first()
+        )
+
+        if reset_code is None:
+            raise serializers.ValidationError("Invalid reset code.")
+
+        if reset_code.is_expired():
+            raise serializers.ValidationError("This code has expired. Please request a new one.")
+
+        attrs["user"] = user
+        attrs["reset_code"] = reset_code
+        return attrs
+
+
+class ResetPasswordSerializer(serializers.Serializer):
+    """Validates the code again and sets the new password."""
+
+    email = serializers.EmailField()
+    code = serializers.RegexField(r"^\d{6}$")
+    new_password = serializers.CharField(min_length=6, write_only=True, trim_whitespace=False)
+
+    def validate(self, attrs):
+        from .models import PasswordResetCode
+
+        email = attrs["email"]
+        code = attrs["code"]
+
+        try:
+            user = CustomUser.objects.get(email__iexact=email)
+        except CustomUser.DoesNotExist:
+            raise serializers.ValidationError("No account found with this email address.")
+
+        reset_code = (
+            PasswordResetCode.objects.filter(user=user, code=code, is_used=False)
+            .order_by("-created_at")
+            .first()
+        )
+
+        if reset_code is None:
+            raise serializers.ValidationError("Invalid reset code.")
+
+        if reset_code.is_expired():
+            raise serializers.ValidationError("This code has expired. Please request a new one.")
+
+        attrs["user"] = user
+        attrs["reset_code"] = reset_code
+        return attrs
+

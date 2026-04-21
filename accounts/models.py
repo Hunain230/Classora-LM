@@ -96,3 +96,26 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 
     def __str__(self) -> str:
         return self.email
+
+
+class PasswordResetCode(models.Model):
+    """
+    Stores a 6-digit OTP code for password reset.
+    Codes expire after 10 minutes and are single-use.
+    """
+
+    user = models.ForeignKey(
+        CustomUser,
+        on_delete=models.CASCADE,
+        related_name="reset_codes",
+    )
+    code = models.CharField(max_length=6)
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+    is_used = models.BooleanField(default=False)
+
+    def is_expired(self) -> bool:
+        return timezone.now() > self.expires_at
+
+    def __str__(self) -> str:
+        return f"ResetCode({self.user.email}, {self.code}, used={self.is_used})"

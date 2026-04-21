@@ -1,19 +1,27 @@
+import random
+from datetime import timedelta
+
+from django.core.mail import send_mail
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
+from django.utils import timezone
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from .models import CustomUser, Institute
+from .models import CustomUser, Institute, PasswordResetCode
 from .permissions import IsAdminRole, IsStudentRole, IsTeacherRole
 from .serializers import (
     CreateUserSerializer,
+    ForgotPasswordSerializer,
     InstituteRegisterSerializer,
     InstituteSerializer,
     LoginSerializer,
+    ResetPasswordSerializer,
     UserSerializer,
+    VerifyResetCodeSerializer,
 )
 
 
@@ -265,3 +273,94 @@ def student_dashboard(request):
         },
         status=status.HTTP_200_OK,
     )
+
+
+# ---------------------------------------------------------------------------
+# Forgot-password flow (all public — user is unauthenticated)
+# ---------------------------------------------------------------------------
+
+
+@api_view(["POST"])
+@permission_classes([AllowAny])
+def forgot_password(request):
+    """
+    Step 1: Accept an email, generate a 6-digit OTP, email it to the user.
+    """
+    serializer = ForgotPasswordSerializer(data=request.data)
+    if not serializer.is_valid():
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    email = serializer.validated_data["email"]
+    user = CustomUser.objects.get(email__iexact=email)
+
+    # Invalidate any previous unused codes for this user.
+    PasswordResetCode.objects.filter(user=user, is_used=False).update(is_used=True)
+
+    # Generate a new 6-digit code.
+    code = f"{random.randint(0, 999999):06d}"
+    expires_at = timezone.now() + timedelta(minutes=10)
+
+    PasswordResetCode.objects.create(user=user, code=code, expires_at=expires_at)
+
+    # Send the code via email.
+    send_mail(
+        subject="Classora LMS — Password Reset Code",
+        message=(
+            f"Hi {user.full_name},\n\n"
+            f"Your password reset code is: {code}\n\n"
+            f"This code will expire in 10 minutes.\n\n"
+            f"If you did not request this, please ignore this email.\n\n"
+            f"— Classora LMS"
+        ),
+        from_email=None,  # Uses DEFAULT_FROM_EMAIL from settings.
+        recipient_list=[user.email],
+        fail_silently=False,
+    )
+
+    return Response(
+        {"message": "A reset code has been sent to your email address."},
+        status=status.HTTP_200_OK,
+    )
+
+
+@api_view(["POST"])
+@permission_classes([AllowAny])
+def verify_reset_code(request):
+    """
+    Step 2: Validate that the code is correct, not expired, and not used.
+    Does NOT consume the code — that happens in reset_password.
+    """
+    serializer = VerifyResetCodeSerializer(data=request.data)
+    if not serializer.is_valid():
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    return Response({"valid": True}, status=status.HTTP_200_OK)
+
+
+@api_view(["POST"])
+@permission_classes([AllowAny])
+def reset_password(request):
+    """
+    Step 3: Validate the code again, set the new hashed password, mark the code as used.
+    """
+    serializer = ResetPasswordSerializer(data=request.data)
+    if not serializer.is_valid():
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    user = serializer.validated_data["user"]
+    reset_code = serializer.validated_data["reset_code"]
+    new_password = serializer.validated_data["new_password"]
+
+    # Hash and save the new password.
+    user.set_password(new_password)
+    user.save()
+
+    # Mark the code as used so it cannot be reused.
+    reset_code.is_used = True
+    reset_code.save()
+
+    return Response(
+        {"message": "Password has been reset successfully. You can now log in."},
+        status=status.HTTP_200_OK,
+    )
+

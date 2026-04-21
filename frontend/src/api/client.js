@@ -13,7 +13,10 @@ apiClient.interceptors.request.use((config) => {
   const isAuthEndpoint =
     url.includes("/api/login") ||
     url.includes("/api/institute/register") ||
-    url.includes("/api/token/refresh");
+    url.includes("/api/token/refresh") ||
+    url.includes("/api/forgot-password") ||
+    url.includes("/api/verify-reset-code") ||
+    url.includes("/api/reset-password");
 
   if (!isAuthEndpoint) {
     const token = window.localStorage.getItem("access_token");
@@ -41,7 +44,10 @@ apiClient.interceptors.response.use(
     const isAuthEndpoint =
       url.includes("/api/login") ||
       url.includes("/api/institute/register") ||
-      url.includes("/api/token/refresh");
+      url.includes("/api/token/refresh") ||
+      url.includes("/api/forgot-password") ||
+      url.includes("/api/verify-reset-code") ||
+      url.includes("/api/reset-password");
 
     if (status === 401 && !originalRequest._retry && !isAuthEndpoint) {
       originalRequest._retry = true;

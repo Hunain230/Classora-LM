@@ -87,7 +87,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'classora_lms',
         'USER': 'root',
-        'PASSWORD': '123456',
+        'PASSWORD': r'REDACTED_DB_PASSWORD',
         'HOST': 'localhost',
         'PORT': '3306',
     }
@@ -147,3 +147,13 @@ REST_FRAMEWORK = {
 import os
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+# Email configuration for password-reset codes (Gmail SMTP).
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'REDACTED_SMTP_USER'
+EMAIL_HOST_PASSWORD = 'REDACTED_SMTP_PASSWORD'
+DEFAULT_FROM_EMAIL = 'Classora LMS <REDACTED_SMTP_USER>'
+
