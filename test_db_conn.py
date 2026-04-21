@@ -1,12 +1,26 @@
-import MySQLdb
+import os
 import sys
 
-passwords = ['', '123456', 'root', 'password']
-for p in passwords:
+import psycopg2
+
+
+def main() -> int:
     try:
-        conn = MySQLdb.connect(host='localhost', user='root', passwd=p, db='classora_lms')
-        print(f"SUCCESS with password: '{p}'")
+        conn = psycopg2.connect(
+            dbname=os.getenv("DB_NAME"),
+            user=os.getenv("DB_USER"),
+            password=os.getenv("DB_PASSWORD"),
+            host=os.getenv("DB_HOST"),
+            port=os.getenv("DB_PORT"),
+            sslmode=os.getenv("DB_SSLMODE", "require"),
+        )
         conn.close()
-        sys.exit(0)
-    except Exception as e:
-        print(f"FAILED with password: '{p}' - {e}")
+        print("PostgreSQL connection successful")
+        return 0
+    except Exception as exc:
+        print(f"PostgreSQL connection failed: {exc}")
+        return 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())

@@ -10,22 +10,38 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
+import os
 from pathlib import Path
+
+from django.core.exceptions import ImproperlyConfigured
+from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+load_dotenv(BASE_DIR / ".env")
+
+
+def get_env(name, default=None, required=False):
+    value = os.getenv(name, default)
+    if required and not value:
+        raise ImproperlyConfigured(f"Set {name} in .env or in the environment.")
+    return value
 
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'REDACTED_DJANGO_SECRET_KEY'
+SECRET_KEY = get_env("DJANGO_SECRET_KEY", required=True)
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = get_env("DJANGO_DEBUG", "True").lower() in {"1", "true", "yes", "on"}
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    host.strip()
+    for host in get_env("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
+    if host.strip()
+]
 
 
 # Application definition
@@ -84,12 +100,15 @@ WSGI_APPLICATION = 'classora.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'classora_lms',
-        'USER': 'root',
-        'PASSWORD': r'REDACTED_DB_PASSWORD',
-        'HOST': 'localhost',
-        'PORT': '3306',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': os.getenv('DB_NAME'),
+        'USER': os.getenv('DB_USER'),
+        'PASSWORD': os.getenv('DB_PASSWORD'),
+        'HOST': os.getenv('DB_HOST'),
+        'PORT': os.getenv('DB_PORT'),
+        'OPTIONS': {
+            'sslmode': 'require',
+        },
     }
 }
 
@@ -144,16 +163,18 @@ REST_FRAMEWORK = {
     ),
 }
 
-import os
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # Email configuration for password-reset codes (Gmail SMTP).
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'REDACTED_SMTP_USER'
-EMAIL_HOST_PASSWORD = 'REDACTED_SMTP_PASSWORD'
-DEFAULT_FROM_EMAIL = 'Classora LMS <REDACTED_SMTP_USER>'
+EMAIL_BACKEND = get_env("EMAIL_BACKEND", 'django.core.mail.backends.smtp.EmailBackend')
+EMAIL_HOST = get_env("EMAIL_HOST", 'smtp.gmail.com')
+EMAIL_PORT = int(get_env("EMAIL_PORT", '587'))
+EMAIL_USE_TLS = get_env("EMAIL_USE_TLS", 'True').lower() in {"1", "true", "yes", "on"}
+EMAIL_HOST_USER = get_env("EMAIL_HOST_USER", '')
+EMAIL_HOST_PASSWORD = get_env("EMAIL_HOST_PASSWORD", '')
+DEFAULT_FROM_EMAIL = get_env(
+    "DEFAULT_FROM_EMAIL",
+    EMAIL_HOST_USER or 'Classora LMS <no-reply@example.com>',
+)
 
